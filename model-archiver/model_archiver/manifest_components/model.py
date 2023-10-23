@@ -35,9 +35,7 @@ class Model(object):
         self.model_dict = self.__to_dict__()
 
     def __to_dict__(self):
-        model_dict = {}
-
-        model_dict["modelName"] = self.model_name
+        model_dict = {"modelName": self.model_name}
 
         if self.serialized_file:
             model_dict["serializedFile"] = self.serialized_file

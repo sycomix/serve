@@ -56,9 +56,11 @@ class WorkflowExportUtils(object):
 
     @staticmethod
     def generate_workflow(workflow_args):
-        workflow = Workflow(workflow_name=workflow_args.workflow_name, spec_file=workflow_args.spec_file,
-                            handler=workflow_args.handler)
-        return workflow
+        return Workflow(
+            workflow_name=workflow_args.workflow_name,
+            spec_file=workflow_args.spec_file,
+            handler=workflow_args.handler,
+        )
 
     @staticmethod
     def generate_manifest_json(args):
@@ -153,12 +155,7 @@ class WorkflowExportUtils(object):
         :param unwanted_dirs:
         :return:
         """
-        if directory in unwanted_dirs:
-            return False
-        if directory.startswith('.'):
-            return False
-
-        return True
+        return False if directory in unwanted_dirs else not directory.startswith('.')
 
     @staticmethod
     def file_filter(current_file, files_to_exclude):
@@ -194,5 +191,6 @@ class WorkflowExportUtils(object):
     def validate_inputs(workflow_name, export_path):
         WorkflowExportUtils.check_workflow_name_regex_or_exit(workflow_name)
         if not os.path.isdir(os.path.abspath(export_path)):
-            raise WorkflowArchiverError("Given export-path {} is not a directory. "
-                                        "Point to a valid export-path directory.".format(export_path))
+            raise WorkflowArchiverError(
+                f"Given export-path {export_path} is not a directory. Point to a valid export-path directory."
+            )

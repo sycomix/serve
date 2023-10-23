@@ -38,7 +38,7 @@ def start():
                 os.remove(pid_file)
     # pylint: disable=too-many-nested-blocks
     if args.version:
-        print("TorchServe Version is {}".format(__version__))
+        print(f"TorchServe Version is {__version__}")
         return
     if args.stop:
         if pid is None:
@@ -64,29 +64,26 @@ def start():
                 os.remove(pid_file)
 
         java_home = os.environ.get("JAVA_HOME")
-        java = "java" if not java_home else "{}/bin/java".format(java_home)
+        java = "java" if not java_home else f"{java_home}/bin/java"
 
         ts_home = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
-        cmd = [java, "-Dmodel_server_home={}".format(ts_home)]
+        cmd = [java, f"-Dmodel_server_home={ts_home}"]
         if args.log_config:
             log_config = os.path.realpath(args.log_config)
             if not os.path.isfile(log_config):
-                print("--log-config file not found: {}".format(log_config))
+                print(f"--log-config file not found: {log_config}")
                 sys.exit(1)
 
-            cmd.append("-Dlog4j.configurationFile=file://{}".format(log_config))
+            cmd.append(f"-Dlog4j.configurationFile=file://{log_config}")
 
-        tmp_dir = os.environ.get("TEMP")
-        if tmp_dir:
+        if tmp_dir := os.environ.get("TEMP"):
             if not os.path.isdir(tmp_dir):
                 print(
-                    "Invalid temp directory: {}, please check TEMP environment variable.".format(
-                        tmp_dir
-                    )
+                    f"Invalid temp directory: {tmp_dir}, please check TEMP environment variable."
                 )
                 sys.exit(1)
 
-            cmd.append("-Djava.io.tmpdir={}".format(tmp_dir))
+            cmd.append(f"-Djava.io.tmpdir={tmp_dir}")
 
         ts_config = os.environ.get("TS_CONFIG_FILE")
         if ts_config is None:
@@ -94,63 +91,52 @@ def start():
         ts_conf_file = None
         if ts_config:
             if not os.path.isfile(ts_config):
-                print("--ts-config file not found: {}".format(ts_config))
+                print(f"--ts-config file not found: {ts_config}")
                 sys.exit(1)
             ts_conf_file = ts_config
 
         platform_path_separator = {"Windows": "", "Darwin": ".:", "Linux": ".:"}
-        class_path = "{}{}".format(
-            platform_path_separator[platform.system()],
-            os.path.join(ts_home, "ts", "frontend", "*"),
-        )
+        class_path = f'{platform_path_separator[platform.system()]}{os.path.join(ts_home, "ts", "frontend", "*")}'
 
         if ts_conf_file and os.path.isfile(ts_conf_file):
             props = load_properties(ts_conf_file)
-            vm_args = props.get("vmargs")
-            if vm_args:
-                print(
-                    "Warning: TorchServe is using non-default JVM parameters: {}".format(
-                        vm_args
-                    )
-                )
+            if vm_args := props.get("vmargs"):
+                print(f"Warning: TorchServe is using non-default JVM parameters: {vm_args}")
                 arg_list = vm_args.split()
                 if args.log_config:
                     for word in arg_list[:]:
                         if word.startswith("-Dlog4j.configurationFile="):
                             arg_list.remove(word)
                 cmd.extend(arg_list)
-            plugins = props.get("plugins_path", None)
-            if plugins:
-                class_path += (
-                    ":" + plugins + "/*" if "*" not in plugins else ":" + plugins
-                )
+            if plugins := props.get("plugins_path", None):
+                class_path += f":{plugins}/*" if "*" not in plugins else f":{plugins}"
 
             if not args.model_store and props.get("model_store"):
                 args.model_store = props.get("model_store")
 
         if args.plugins_path:
             class_path += (
-                ":" + args.plugins_path + "/*"
+                f":{args.plugins_path}/*"
                 if "*" not in args.plugins_path
-                else ":" + args.plugins_path
+                else f":{args.plugins_path}"
             )
 
-        cmd.append("-cp")
-        cmd.append(class_path)
-
-        cmd.append("org.pytorch.serve.ModelServer")
-
-        # model-server.jar command line parameters
-        cmd.append("--python")
-        cmd.append(sys.executable)
-
+        cmd.extend(
+            (
+                "-cp",
+                class_path,
+                "org.pytorch.serve.ModelServer",
+                "--python",
+                sys.executable,
+            )
+        )
         if ts_conf_file is not None:
             cmd.append("-f")
             cmd.append(ts_conf_file)
 
         if args.model_store:
             if not os.path.isdir(args.model_store):
-                print("--model-store directory not found: {}".format(args.model_store))
+                print(f"--model-store directory not found: {args.model_store}")
                 sys.exit(1)
 
             cmd.append("-s")
@@ -161,15 +147,10 @@ def start():
 
         if args.workflow_store:
             if not os.path.isdir(args.workflow_store):
-                print(
-                    "--workflow-store directory not found: {}".format(
-                        args.workflow_store
-                    )
-                )
+                print(f"--workflow-store directory not found: {args.workflow_store}")
                 sys.exit(1)
 
-            cmd.append("-w")
-            cmd.append(args.workflow_store)
+            cmd.extend(("-w", args.workflow_store))
         else:
             cmd.append("-w")
             cmd.append(args.model_store)

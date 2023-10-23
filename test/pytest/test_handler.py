@@ -64,7 +64,7 @@ def mnist_model_register_using_non_existent_handler_then_scale_up(synchronous=Fa
     Validates that snapshot.cfg is created when management apis are invoked.
     """
     response = requests.post(
-        TF_MANAGEMENT_API + "/models?handler=nehandler&url=mnist.mar"
+        f"{TF_MANAGEMENT_API}/models?handler=nehandler&url=mnist.mar"
     )
 
     # Scale up workers
@@ -76,9 +76,9 @@ def mnist_model_register_using_non_existent_handler_then_scale_up(synchronous=Fa
     else:
         params = (("min_worker", "2"),)
 
-    response = requests.put(TF_MANAGEMENT_API + "/models/mnist", params=params)
+    response = requests.put(f"{TF_MANAGEMENT_API}/models/mnist", params=params)
     # Check if workers got scaled
-    response = requests.get(TF_MANAGEMENT_API + "/models/mnist")
+    response = requests.get(f"{TF_MANAGEMENT_API}/models/mnist")
     return response
 
 
@@ -118,7 +118,7 @@ def run_inference_using_url_with_data(purl=None, pfiles=None, ptimeout=120):
     try:
         response = requests.post(url=purl, files=pfiles, timeout=ptimeout)
     except:
-        print(f"sent echo_stream rep=none")
+        print("sent echo_stream rep=none")
         return None
     else:
         print(f"sent echo_stream rep={response}")
@@ -146,7 +146,7 @@ def test_mnist_model_register_and_inference_on_valid_model():
         "data": (data_file_mnist, open(data_file_mnist, "rb")),
     }
     response = run_inference_using_url_with_data(
-        TF_INFERENCE_API + "/predictions/mnist", files
+        f"{TF_INFERENCE_API}/predictions/mnist", files
     )
 
     assert (json.loads(response.content)) == 1
@@ -164,14 +164,9 @@ def test_mnist_model_register_using_non_existent_handler_with_nonzero_workers():
         + "/models?handler=nehandlermodels&initial_workers=1&url=mnist.mar"
     )
     if (
-        json.loads(response.content)["code"] == 500
-        and json.loads(response.content)["type"] == "InternalServerException"
+        json.loads(response.content)["code"] != 500
+        or json.loads(response.content)["type"] != "InternalServerException"
     ):
-        assert True, (
-            "Internal Server Exception, "
-            "Cannot register model with non existent handler with non zero workers"
-        )
-    else:
         assert False, (
             "Something is not right!! Successfully registered model with "
             "non existent handler with non zero workers"
@@ -189,11 +184,9 @@ def test_mnist_model_register_scale_inference_with_non_existent_handler():
     }
 
     response = run_inference_using_url_with_data(
-        TF_INFERENCE_API + "/predictions/mnist", files
+        f"{TF_INFERENCE_API}/predictions/mnist", files
     )
-    if response is None:
-        assert True, "Inference failed as the handler is non existent"
-    else:
+    if response is not None:
         if json.loads(response.content) == 1:
             assert False, (
                 "Something is not right!! Somehow Inference passed "
@@ -211,7 +204,7 @@ def test_mnist_model_register_and_inference_on_valid_model_explain():
         "data": (data_file_mnist, open(data_file_mnist, "rb")),
     }
     response = run_inference_using_url_with_data(
-        TF_INFERENCE_API + "/explanations/mnist", files
+        f"{TF_INFERENCE_API}/explanations/mnist", files
     )
 
     assert np.array(json.loads(response.content)).shape == (1, 28, 28)
@@ -231,7 +224,7 @@ def test_kserve_mnist_model_register_and_inference_on_valid_model():
         data = json.loads(s)
 
     response = run_inference_using_url_with_data_json(
-        KF_INFERENCE_API + "/v1/models/mnist:predict", data
+        f"{KF_INFERENCE_API}/v1/models/mnist:predict", data
     )
 
     assert (json.loads(response.content)["predictions"][0]) == 2
@@ -248,12 +241,10 @@ def test_kserve_mnist_model_register_scale_inference_with_non_existent_handler()
         data = json.loads(s)
 
     response = run_inference_using_url_with_data_json(
-        KF_INFERENCE_API + "/v1/models/mnist:predict", data
+        f"{KF_INFERENCE_API}/v1/models/mnist:predict", data
     )
 
-    if response is None:
-        assert True, "Inference failed as the handler is non existent"
-    else:
+    if response is not None:
         if json.loads(response.content) == 1:
             assert False, (
                 "Something is not right!! Somehow Inference passed "
@@ -273,7 +264,7 @@ def test_kserve_mnist_model_register_and_inference_on_valid_model_explain():
         data = json.loads(s)
 
     response = run_inference_using_url_with_data_json(
-        KF_INFERENCE_API + "/v1/models/mnist:explain", data
+        f"{KF_INFERENCE_API}/v1/models/mnist:explain", data
     )
 
     assert np.array(json.loads(response.content)["explanations"]).shape == (
@@ -337,7 +328,7 @@ def test_MMF_activity_recognition_model_register_and_inference_on_valid_model():
         "labels": info["action_labels"],
     }
     response = run_inference_using_url_with_data(
-        TF_INFERENCE_API + "/v1/models/MMF_activity_recognition_v2:predict",
+        f"{TF_INFERENCE_API}/v1/models/MMF_activity_recognition_v2:predict",
         pfiles=files,
     )
     response = response.content.decode("utf-8")
@@ -353,7 +344,7 @@ def test_MMF_activity_recognition_model_register_and_inference_on_valid_model():
 
 def test_huggingface_bert_model_parallel_inference():
     number_of_gpus = torch.cuda.device_count()
-    check = os.popen(f"curl http://localhost:8081/models")
+    check = os.popen("curl http://localhost:8081/models")
     print(check)
     if number_of_gpus > 1:
         batch_size = 1
@@ -402,14 +393,14 @@ def test_echo_stream_inference():
     )
 
     response = requests.post(
-        TF_INFERENCE_API + "/predictions/echo_stream", data="foo", stream=True
+        f"{TF_INFERENCE_API}/predictions/echo_stream", data="foo", stream=True
     )
     assert response.headers["Transfer-Encoding"] == "chunked"
 
-    prediction = []
-    for chunk in response.iter_content(chunk_size=None):
-        if chunk:
-            prediction.append(chunk.decode("utf-8"))
-
-    assert str(" ".join(prediction)) == "hello hello hello hello world "
+    prediction = [
+        chunk.decode("utf-8")
+        for chunk in response.iter_content(chunk_size=None)
+        if chunk
+    ]
+    assert " ".join(prediction) == "hello hello hello hello world "
     test_utils.unregister_model("echo_stream")

@@ -9,14 +9,12 @@ import management_pb2_grpc
 
 def get_inference_stub():
     channel = grpc.insecure_channel("localhost:7070")
-    stub = inference_pb2_grpc.InferenceAPIsServiceStub(channel)
-    return stub
+    return inference_pb2_grpc.InferenceAPIsServiceStub(channel)
 
 
 def get_management_stub():
     channel = grpc.insecure_channel("localhost:7071")
-    stub = management_pb2_grpc.ManagementAPIsServiceStub(channel)
-    return stub
+    return management_pb2_grpc.ManagementAPIsServiceStub(channel)
 
 
 def infer(stub, model_name, model_input):
@@ -53,15 +51,11 @@ def infer_stream(stub, model_name, model_input):
 
 
 def register(stub, model_name, mar_set_str):
-    mar_set = set()
-    if mar_set_str:
-        mar_set = set(mar_set_str.split(","))
+    mar_set = set(mar_set_str.split(",")) if mar_set_str else set()
     marfile = f"{model_name}.mar"
     print(f"## Check {marfile} in mar_set :", mar_set)
     if marfile not in mar_set:
-        marfile = "https://torchserve.s3.amazonaws.com/mar_files/{}.mar".format(
-            model_name
-        )
+        marfile = f"https://torchserve.s3.amazonaws.com/mar_files/{model_name}.mar"
 
     print(f"## Register marfile: {marfile}\n")
     params = {
@@ -75,7 +69,7 @@ def register(stub, model_name, mar_set_str):
         print(f"Model {model_name} registered successfully")
     except grpc.RpcError as e:
         print(f"Failed to register model {model_name}.")
-        print(str(e.details()))
+        print(e.details())
         exit(1)
 
 
@@ -87,7 +81,7 @@ def unregister(stub, model_name):
         print(f"Model {model_name} unregistered successfully")
     except grpc.RpcError as e:
         print(f"Failed to unregister model {model_name}.")
-        print(str(e.details()))
+        print(e.details())
         exit(1)
 
 

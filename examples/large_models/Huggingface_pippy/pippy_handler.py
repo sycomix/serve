@@ -100,8 +100,7 @@ class TransformersSeqClassifierHandler(BasePippyHandler, ABC):
         for input_text in input_texts:
             input_ids = self.encode_input_text(input_text)
             input_ids_batch.append(input_ids)
-        input_ids_batch = torch.cat(input_ids_batch, dim=0).to(self.device)
-        return input_ids_batch
+        return torch.cat(input_ids_batch, dim=0).to(self.device)
 
     def encode_input_text(self, input_text):
         """
@@ -121,8 +120,7 @@ class TransformersSeqClassifierHandler(BasePippyHandler, ABC):
             add_special_tokens=True,
             return_tensors="pt",
         )
-        input_ids = inputs["input_ids"]
-        return input_ids
+        return inputs["input_ids"]
 
     def inference(self, input_batch):
         """

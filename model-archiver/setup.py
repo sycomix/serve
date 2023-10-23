@@ -41,7 +41,9 @@ def detect_model_archiver_version():
         return model_archiver.__version__.strip()
 
     # pylint: disable = relative-import
-    return model_archiver.__version__.strip() + "b" + str(date.today()).replace("-", "")
+    return f"{model_archiver.__version__.strip()}b" + str(
+        date.today()
+    ).replace("-", "")
 
 
 def get_nightly_version():

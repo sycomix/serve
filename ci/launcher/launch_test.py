@@ -37,7 +37,7 @@ def run_commands_on_ec2_instance(ec2_connection, is_gpu):
 
     virtual_env_name = "venv"
 
-    with ec2_connection.cd(f"/home/ubuntu/serve"):
+    with ec2_connection.cd("/home/ubuntu/serve"):
         ec2_connection.run(f"python -m venv {virtual_env_name}")
         with ec2_connection.prefix(f"source {virtual_env_name}/bin/activate"):
             commands_list = GPU_INSTANCE_COMMANDS_LIST if is_gpu else CPU_INSTANCE_COMMANDS_LIST
@@ -102,10 +102,10 @@ def launch_ec2_instance(region, instance_type, ami_id):
         instance_id = instance_details["InstanceId"]
         ip_address = ec2_utils.get_public_ip(instance_id, region=region)
 
-        LOGGER.info(f"*** Waiting on instance checks to complete...")
+        LOGGER.info("*** Waiting on instance checks to complete...")
         ec2_utils.check_instance_state(instance_id, state="running", region=region)
         ec2_utils.check_system_state(instance_id, system_status="ok", instance_status="ok", region=region)
-        LOGGER.info(f"*** Instance checks complete. Running commands on instance.")
+        LOGGER.info("*** Instance checks complete. Running commands on instance.")
 
         # Create a fabric connection to the ec2 instance.
         ec2_connection = ec2_utils.get_ec2_fabric_connection(instance_id, key_file, region)
@@ -113,8 +113,8 @@ def launch_ec2_instance(region, instance_type, ami_id):
         # Wait for a few minutes before running any command since ubuntu runs background updates.
         time.sleep(300)
 
-        LOGGER.info(f"Running update command. This could take a while.")
-        ec2_connection.run(f"sudo apt update")
+        LOGGER.info("Running update command. This could take a while.")
+        ec2_connection.run("sudo apt update")
 
         time.sleep(300)
 
@@ -128,28 +128,34 @@ def launch_ec2_instance(region, instance_type, ami_id):
             else:
                 ec2_connection.run(f"cd serve && git fetch origin {github_pull_request_number}")
 
-            ec2_connection.run(f"sudo apt-get install -y python3.8-dev python3.8-distutils python3.8-venv")
+            ec2_connection.run(
+                "sudo apt-get install -y python3.8-dev python3.8-distutils python3.8-venv"
+            )
             # update alternatives doesn't seem to work
-            ec2_connection.run(f"sudo ln -fs /usr/bin/python3.8 /usr/bin/python")
+            ec2_connection.run("sudo ln -fs /usr/bin/python3.8 /usr/bin/python")
             # Following is necessary on Base Ubuntu DLAMI because the default python is python2
             # This will NOT fail for other AMI where default python is python3
             ec2_connection.run(
-                f"curl -O https://bootstrap.pypa.io/get-pip.py && python get-pip.py", warn=True
+                "curl -O https://bootstrap.pypa.io/get-pip.py && python get-pip.py",
+                warn=True,
             )
 
-        is_gpu = True if instance_type[:2] in GPU_INSTANCES else False
+        is_gpu = instance_type[:2] in GPU_INSTANCES
 
         command_return_value_map = run_commands_on_ec2_instance(ec2_connection, is_gpu)
 
         if any(command_return_value_map.values()):
-            raise ValueError(f"*** One of the commands executed on ec2 returned a non-zero value.")
-        else:
-            LOGGER.info(f"*** All commands executed successfully on ec2. command:return_value map is as follows:")
-            LOGGER.info(command_return_value_map)
+            raise ValueError(
+                "*** One of the commands executed on ec2 returned a non-zero value."
+            )
+        LOGGER.info(
+            "*** All commands executed successfully on ec2. command:return_value map is as follows:"
+        )
+        LOGGER.info(command_return_value_map)
 
     except ValueError as e:
         LOGGER.error(f"*** ValueError: {e}")
-        LOGGER.error(f"*** Following commands had the corresponding return value:")
+        LOGGER.error("*** Following commands had the corresponding return value:")
         LOGGER.error(command_return_value_map)
         raise e
     except Exception as e:

@@ -43,8 +43,5 @@ class NearRealTimeVideoHandler(ImageClassifier):
         probs = probs.tolist()
         classes = classes.tolist()
 
-        # Return a list of 1 element of the batch output
-        result = []
         output = map_class_to_label(probs, self.mapping, classes)
-        result.append(output)
-        return result
+        return [output]

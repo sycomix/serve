@@ -64,10 +64,10 @@ class CachingMetric(MetricAbstract):
                 f"Dimension values: {dimension_values} should "
                 f"correspond to Dimension names: {self.dimension_names}"
             )
-        dim_objs = []
-        for dim_name, dim_value in zip(self.dimension_names, dimension_values):
-            dim_objs.append(Dimension(dim_name, dim_value))
-        return dim_objs
+        return [
+            Dimension(dim_name, dim_value)
+            for dim_name, dim_value in zip(self.dimension_names, dimension_values)
+        ]
 
     def _validate_metric_value(
         self,

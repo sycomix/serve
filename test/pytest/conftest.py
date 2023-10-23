@@ -10,10 +10,11 @@ CURR_FILE_PATH = os.path.dirname(os.path.realpath(__file__))
 REPO_ROOT_DIR = os.path.normpath(os.path.join(CURR_FILE_PATH, "..", ".."))
 
 # Exclude the following tests from regression tests
-collect_ignore = []
-collect_ignore.append("test_example_torchrec_dlrm.py")
-collect_ignore.append("test_example_near_real_time_video.py")
-collect_ignore.append("test_dali_preprocess.py")
+collect_ignore = [
+    "test_example_torchrec_dlrm.py",
+    "test_example_near_real_time_video.py",
+    "test_dali_preprocess.py",
+]
 
 
 @pytest.fixture(scope="module")

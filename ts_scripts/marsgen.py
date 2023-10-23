@@ -20,7 +20,7 @@ def delete_model_store_gen_dir():
         try:
             shutil.rmtree(MODEL_STORE_DIR)
         except OSError as e:
-            print("Error: %s : %s" % (MODEL_STORE_DIR, e.strerror))
+            print(f"Error: {MODEL_STORE_DIR} : {e.strerror}")
 
 
 mar_set = set()
@@ -75,11 +75,7 @@ def generate_mars(mar_config=MAR_CONFIG_FILE_PATH, model_store_dir=MODEL_STORE_D
                 ):
                     subprocess.run(["python", model["gen_scripted_file_path"]])
                 else:
-                    serialized_model_file_url = (
-                        "https://download.pytorch.org/models/{}".format(
-                            model["serialized_file_remote"]
-                        )
-                    )
+                    serialized_model_file_url = f'https://download.pytorch.org/models/{model["serialized_file_remote"]}'
                     urllib.request.urlretrieve(
                         serialized_model_file_url,
                         f'{model_store_dir}/{model["serialized_file_remote"]}',
@@ -117,15 +113,11 @@ def generate_mars(mar_config=MAR_CONFIG_FILE_PATH, model_store_dir=MODEL_STORE_D
             print(f"## In directory: {os.getcwd()} | Executing command: {cmd}\n")
             try:
                 subprocess.check_call(cmd, shell=True)
-                marfile = "{}.mar".format(model["model_name"])
-                print("## {} is generated.\n".format(marfile))
+                marfile = f'{model["model_name"]}.mar'
+                print(f"## {marfile} is generated.\n")
                 mar_set.add(marfile)
             except subprocess.CalledProcessError as exc:
-                print(
-                    "## {} creation failed !, error: {}\n".format(
-                        model["model_name"], exc
-                    )
-                )
+                print(f'## {model["model_name"]} creation failed !, error: {exc}\n')
 
             if (
                 model.get("serialized_file_remote")

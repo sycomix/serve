@@ -68,11 +68,11 @@ class NoopService(object):
         gpu_id = properties.get("gpu_id")
         batch_size = properties.get("batch_size")
 
-        logging.debug("server_name: {}".format(server_name))
-        logging.debug("server_version: {}".format(server_version))
-        logging.debug("model_dir: {}".format(model_dir))
-        logging.debug("gpu_id: {}".format(gpu_id))
-        logging.debug("batch_size: {}".format(batch_size))
+        logging.debug(f"server_name: {server_name}")
+        logging.debug(f"server_version: {server_version}")
+        logging.debug(f"model_dir: {model_dir}")
+        logging.debug(f"gpu_id: {gpu_id}")
+        logging.debug(f"batch_size: {batch_size}")
         try:
             preprocess_start = time.time()
             data = self.preprocess(data)
@@ -85,7 +85,7 @@ class NoopService(object):
             context.set_response_content_type(0, "text/plain")
 
             content_type = context.request_processor[0].get_request_property("Content-Type")
-            logging.debug("content_type: {}".format(content_type))
+            logging.debug(f"content_type: {content_type}")
 
             metrics = context.metrics
             metrics.add_time("PreprocessTime", round((inference_start - preprocess_start) * 1000, 2))
@@ -95,7 +95,7 @@ class NoopService(object):
         except Exception as e:
             logging.error(e, exc_info=True)
             context.request_processor[0].report_status(500, "Unknown inference error.")
-            return ["Error {}".format(str(e))] * len(data)
+            return [f"Error {str(e)}"] * len(data)
 
 
 _service = NoopService()
@@ -105,7 +105,4 @@ def handle(data, context):
     if not _service.initialized:
         _service.initialize(context)
 
-    if data is None:
-        return None
-
-    return _service.handle(data, context)
+    return None if data is None else _service.handle(data, context)

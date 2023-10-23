@@ -130,10 +130,10 @@ class TransformersSeqClassifierHandler(BaseHandler, ABC):
         # Read the mapping file, index to object name
         mapping_file_path = os.path.join(model_dir, "index_to_name.json")
         # Question answering does not need the index_to_name.json file.
-        if not (
-            self.setup_config["mode"] == "question_answering"
-            or self.setup_config["mode"] == "text_generation"
-        ):
+        if self.setup_config["mode"] not in [
+            "question_answering",
+            "text_generation",
+        ]:
             if os.path.isfile(mapping_file_path):
                 with open(mapping_file_path) as f:
                     self.mapping = json.load(f)
@@ -159,7 +159,7 @@ class TransformersSeqClassifierHandler(BaseHandler, ABC):
                 input_text = input_text.decode("utf-8")
             if (
                 self.setup_config["captum_explanation"]
-                and not self.setup_config["mode"] == "question_answering"
+                and self.setup_config["mode"] != "question_answering"
             ):
                 input_text_target = ast.literal_eval(input_text)
                 input_text = input_text_target["text"]
@@ -203,8 +203,6 @@ class TransformersSeqClassifierHandler(BaseHandler, ABC):
                 )
             input_ids = inputs["input_ids"].to(self.device)
             attention_mask = inputs["attention_mask"].to(self.device)
-            # making a batch out of the recieved requests
-            # attention masks are passed for cases where input tokens are padded.
             if input_ids.shape is not None:
                 if input_ids_batch is None:
                     input_ids_batch = input_ids
@@ -318,11 +316,10 @@ class TransformersSeqClassifierHandler(BaseHandler, ABC):
             outputs = self.model.generate(
                 input_ids_batch, max_length=50, do_sample=True, top_p=0.95, top_k=60
             )
-            for i, x in enumerate(outputs):
-                inferences.append(
-                    self.tokenizer.decode(outputs[i], skip_special_tokens=True)
-                )
-
+            inferences.extend(
+                self.tokenizer.decode(outputs[i], skip_special_tokens=True)
+                for i, x in enumerate(outputs)
+            )
             logger.info("Generated text: '%s'", inferences)
 
         print("Generated text", inferences)
@@ -359,7 +356,7 @@ class TransformersSeqClassifierHandler(BaseHandler, ABC):
             text = text.decode("utf-8")
         text_target = ast.literal_eval(text)
 
-        if not self.setup_config["mode"] == "question_answering":
+        if self.setup_config["mode"] != "question_answering":
             text = text_target["text"]
         self.target = text_target["target"]
 
@@ -367,12 +364,11 @@ class TransformersSeqClassifierHandler(BaseHandler, ABC):
             text, self.tokenizer, self.device, self.setup_config["mode"]
         )
         all_tokens = get_word_token(input_ids, self.tokenizer)
-        response = {}
-        response["words"] = all_tokens
-        if (
-            self.setup_config["mode"] == "sequence_classification"
-            or self.setup_config["mode"] == "token_classification"
-        ):
+        response = {"words": all_tokens}
+        if self.setup_config["mode"] in [
+            "sequence_classification",
+            "token_classification",
+        ]:
             attributions, delta = self.lig.attribute(
                 inputs=input_ids,
                 baselines=ref_input_ids,

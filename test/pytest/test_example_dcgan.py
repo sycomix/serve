@@ -25,7 +25,6 @@ def setup_module():
     copy(DCGAN_MAR_FILE, MODELSTORE_DIR)  # Copy *.mar to modelstore
 
     test_utils.start_torchserve(model_store=MODELSTORE_DIR)
-    pass
 
 
 def teardown_module():
@@ -36,13 +35,12 @@ def teardown_module():
     os.rmdir(MODELSTORE_DIR)
 
     delete_example_mar()
-    pass
 
 
 def create_example_mar():
     # Create only if not already present
     if not os.path.exists(DCGAN_MAR_FILE):
-        create_mar_cmd = "cd " + DCGAN_EXAMPLE_DIR + ";./create_mar.sh"
+        create_mar_cmd = f"cd {DCGAN_EXAMPLE_DIR};./create_mar.sh"
         subprocess.check_call(create_mar_cmd, shell=True)
 
 

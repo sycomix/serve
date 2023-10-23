@@ -13,9 +13,7 @@ def create_file_path(path):
     try:
         os.makedirs(path)
     except OSError as exc:
-        if exc.errno == errno.EEXIST and os.path.isdir(path):
-            pass
-        else:
+        if exc.errno != errno.EEXIST or not os.path.isdir(path):
             raise
 
 
@@ -31,12 +29,12 @@ def delete_file_path(path):
 
 def run_test(test, cmd):
     it = test.get("iterations") if test.get("iterations") is not None else 1
-    for i in range(it):
+    for _ in range(it):
         try:
             subprocess.check_call(cmd, shell=True)
         except subprocess.CalledProcessError as exc:
             if test.get("expect-error") is not True:
-                assert 0, "{}".format(exc.output)
+                assert 0, f"{exc.output}"
             else:
                 return 0
     return 1
@@ -77,10 +75,7 @@ def build_cmd(test):
     args = ['workflow-name', 'spec-file', 'handler', 'export-path']
     cmd = ["torch-workflow-archiver"]
 
-    for arg in args:
-        if arg in test:
-            cmd.append("--{0} {1}".format(arg, test[arg]))
-
+    cmd.extend("--{0} {1}".format(arg, test[arg]) for arg in args if arg in test)
     return " ".join(cmd)
 
 

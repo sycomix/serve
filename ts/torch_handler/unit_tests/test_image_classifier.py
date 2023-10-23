@@ -46,7 +46,7 @@ def model_dir(tmp_path_factory, model_name):
     download_model(model_url, model_dir)
 
     files = {
-        "model.py": model_name + ".py",
+        "model.py": f"{model_name}.py",
         "index_to_name.json": "index_to_name.json",
     }
 
@@ -60,12 +60,11 @@ def model_dir(tmp_path_factory, model_name):
 @pytest.fixture(scope="module")
 def context(model_dir, model_name):
 
-    context = MockContext(
+    yield MockContext(
         model_name="mnist",
         model_dir=model_dir.as_posix(),
-        model_file=model_name + ".py",
+        model_file=f"{model_name}.py",
     )
-    yield context
 
 
 @pytest.fixture(scope="module")

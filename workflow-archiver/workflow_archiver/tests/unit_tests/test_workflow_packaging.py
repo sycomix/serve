@@ -29,11 +29,13 @@ class TestWorkflowPackaging:
     @pytest.fixture()
     def patches(self, mocker):
         Patches = namedtuple('Patches', ['arg_parse', 'export_utils', 'export_method'])
-        patches = Patches(mocker.patch('workflow_archiver.workflow_packaging.ArgParser'),
-                          mocker.patch('workflow_archiver.workflow_packaging.WorkflowExportUtils'),
-                          mocker.patch('workflow_archiver.workflow_packaging.package_workflow'))
-
-        return patches
+        return Patches(
+            mocker.patch('workflow_archiver.workflow_packaging.ArgParser'),
+            mocker.patch(
+                'workflow_archiver.workflow_packaging.WorkflowExportUtils'
+            ),
+            mocker.patch('workflow_archiver.workflow_packaging.package_workflow'),
+        )
 
     def test_gen_workflow_archive(self, patches):
         patches.arg_parse.workflow_archiver_args_parser.parse_args.return_value = self.args

@@ -52,15 +52,13 @@ class TorchModelServiceWorker(object):
                 s_name_parts[1],
                 os.getpid(),
             )
-            s_name_new = s_name_parts[0] + "." + str(int(s_name_parts[1]) + LOCAL_RANK)
+            s_name_new = f"{s_name_parts[0]}.{str(int(s_name_parts[1]) + LOCAL_RANK)}"
             self.sock_name, self.port = s_name_new, -1
             try:
                 os.remove(s_name_new)
             except OSError as e:
                 if os.path.exists(s_name_new):
-                    raise RuntimeError(
-                        "socket already in use: {}.".format(s_name_new)
-                    ) from e
+                    raise RuntimeError(f"socket already in use: {s_name_new}.") from e
 
         elif s_type == "tcp":
             self.sock_name = host_addr if host_addr is not None else "127.0.0.1"
@@ -118,10 +116,7 @@ class TorchModelServiceWorker(object):
                 batch_size = int(load_model_request["batchSize"])
             logging.info("model_name: %s, batchSize: %d", model_name, batch_size)
 
-            gpu = None
-            if "gpu" in load_model_request:
-                gpu = int(load_model_request["gpu"])
-
+            gpu = int(load_model_request["gpu"]) if "gpu" in load_model_request else None
             limit_max_image_pixels = True
             if "limitMaxImagePixels" in load_model_request:
                 limit_max_image_pixels = bool(load_model_request["limitMaxImagePixels"])
@@ -141,7 +136,7 @@ class TorchModelServiceWorker(object):
 
             logging.debug("Model %s loaded.", model_name)
 
-            return service, "loaded model {}".format(model_name), 200
+            return service, f"loaded model {model_name}", 200
         except MemoryError as ex:
             logging.exception(
                 "Load model %s cpu OOM, exception %s", model_name, str(ex)
@@ -186,10 +181,10 @@ class TorchModelServiceWorker(object):
                 resp += create_load_model_response(code, result)
                 cl_socket.sendall(resp)
                 if code != 200:
-                    raise RuntimeError("{} - {}".format(code, result))
+                    raise RuntimeError(f"{code} - {result}")
                 service.set_cl_socket(cl_socket)
             else:
-                raise ValueError("Received unknown command: {}".format(cmd))
+                raise ValueError(f"Received unknown command: {cmd}")
 
     def run_server(self):
         """

@@ -26,11 +26,10 @@ def start_torchserve(
 ):
     stop_torchserve()
     crate_mar_file_table()
-    cmd = ["torchserve", "--start"]
     model_store = model_store if model_store else MODEL_STORE
     if gen_mar:
         mg.gen_mar(model_store)
-    cmd.extend(["--model-store", model_store])
+    cmd = ["torchserve", "--start", *["--model-store", model_store]]
     if snapshot_file:
         cmd.extend(["--ts-config", snapshot_file])
     if no_config_snapshots:
@@ -48,13 +47,13 @@ def stop_torchserve():
 def delete_all_snapshots():
     for f in glob.glob("logs/config/*"):
         os.remove(f)
-    assert len(glob.glob("logs/config/*")) == 0
+    assert not glob.glob("logs/config/*")
 
 
 def delete_model_store(model_store=None):
     """Removes all model mar files from model store"""
     model_store = model_store if model_store else MODEL_STORE
-    for f in glob.glob(model_store + "/*.mar"):
+    for f in glob.glob(f"{model_store}/*.mar"):
         os.remove(f)
 
 
@@ -75,13 +74,11 @@ def register_model(model_name, url):
 
 
 def register_model_with_params(params):
-    response = requests.post("http://localhost:8081/models", params=params)
-    return response
+    return requests.post("http://localhost:8081/models", params=params)
 
 
 def unregister_model(model_name):
-    response = requests.delete("http://localhost:8081/models/{}".format(model_name))
-    return response
+    return requests.delete(f"http://localhost:8081/models/{model_name}")
 
 
 def delete_mar_file_from_model_store(model_store=None, model_mar=None):
@@ -91,7 +88,7 @@ def delete_mar_file_from_model_store(model_store=None, model_mar=None):
         else os.path.join(ROOT_DIR, "model_store")
     )
     if model_mar is not None:
-        for f in glob.glob(path.join(model_store, model_mar + "*")):
+        for f in glob.glob(path.join(model_store, f"{model_mar}*")):
             os.remove(f)
 
 
@@ -151,10 +148,7 @@ def model_archiver_command_builder(
     # Append the export-path argument to the list
     cmd_parts.append(f"--export-path {MODEL_STORE}")
 
-    # Convert the list into a string to represent the complete command
-    cmd = " ".join(cmd_parts)
-
-    return cmd
+    return " ".join(cmd_parts)
 
 
 def load_module_from_py_file(py_file: str) -> object:

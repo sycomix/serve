@@ -117,15 +117,17 @@ def map_class_to_label(probs, mapping=None, lbl_classes=None):
     if lbl_classes is None:
         lbl_classes = itertools.repeat(range(len(probs[0])), len(probs))
 
-    results = [
+    return [
         {
-            (mapping[str(lbl_class)] if mapping is not None else str(lbl_class)): prob
+            (
+                mapping[str(lbl_class)]
+                if mapping is not None
+                else str(lbl_class)
+            ): prob
             for lbl_class, prob in zip(*row)
         }
         for row in zip(lbl_classes, probs)
     ]
-
-    return results
 
 
 def get_yaml_config(yaml_file_path):

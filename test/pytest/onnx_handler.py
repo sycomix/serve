@@ -16,5 +16,4 @@ class ONNXHandler(BaseHandler):
             # TODO: Should we make this "modelInput configurable", feels complicated
             results = self.model.run(None, {"modelInput": data})
 
-            str_results = ["Prediction Succeeded" for _ in results]
-            return str_results
+            return ["Prediction Succeeded" for _ in results]

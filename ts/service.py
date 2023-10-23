@@ -89,17 +89,15 @@ class Service(object):
             model_in = {}
             # Parameter level headers are updated here. multipart/form-data can have multiple headers.
             for parameter in parameters:
-                model_in.update({parameter["name"]: parameter["value"]})
-                model_in_headers.update(
-                    {parameter["name"]: {"content-type": parameter["contentType"]}}
-                )
+                model_in[parameter["name"]] = parameter["value"]
+                model_in_headers[parameter["name"]] = {
+                    "content-type": parameter["contentType"]
+                }
 
             # Request level headers are populated here
             if request_batch.get("headers") is not None:
                 for h in request_batch.get("headers"):
-                    model_in_headers.update(
-                        {h["name"].decode("utf-8"): h["value"].decode("utf-8")}
-                    )
+                    model_in_headers[h["name"].decode("utf-8")] = h["value"].decode("utf-8")
 
             headers.append(RequestProcessor(model_in_headers))
             input_batch.append(model_in)

@@ -81,8 +81,7 @@ class TestInit:
     @pytest.fixture()
     def patches(self, mocker):
         Patches = namedtuple("Patches", ["remove", "socket"])
-        patches = Patches(mocker.patch("os.remove"), mocker.patch("socket.socket"))
-        return patches
+        return Patches(mocker.patch("os.remove"), mocker.patch("socket.socket"))
 
     def test_success(self, patches):
         TorchModelServiceWorker(
@@ -143,8 +142,7 @@ class TestLoadModel:
     @pytest.fixture()
     def patches(self, mocker):
         Patches = namedtuple("Patches", ["loader"])
-        patches = Patches(mocker.patch("ts.model_service_worker.ModelLoaderFactory"))
-        return patches
+        return Patches(mocker.patch("ts.model_service_worker.ModelLoaderFactory"))
 
     def test_load_model(self, patches, model_service_worker):
         patches.loader.get_model_loader.return_value = Mock()
@@ -170,8 +168,7 @@ class TestHandleConnection:
     @pytest.fixture()
     def patches(self, mocker):
         Patches = namedtuple("Patches", ["retrieve_msg"])
-        patches = Patches(mocker.patch("ts.model_service_worker.retrieve_msg"))
-        return patches
+        return Patches(mocker.patch("ts.model_service_worker.retrieve_msg"))
 
     def test_handle_connection(self, patches, model_service_worker):
         patches.retrieve_msg.side_effect = [(b"L", ""), (b"I", ""), (b"U", "")]

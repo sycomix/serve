@@ -14,10 +14,9 @@ class MicroBatchingHandler(ImageClassifier):
     def initialize(self, ctx):
         super().initialize(ctx)
 
-        parallelism = ctx.model_yaml_config.get("micro_batching", {}).get(
+        if parallelism := ctx.model_yaml_config.get("micro_batching", {}).get(
             "parallelism", None
-        )
-        if parallelism:
+        ):
             logger.info(
                 f"Setting micro batching parallelism  from model_config_yaml: {parallelism}"
             )

@@ -56,7 +56,7 @@ class TorchserveModel(Model):
         model_path = pathlib.Path(kserve.Storage.download(self.model_dir))
         paths = list(pathlib.Path(model_path).glob("*.mar"))
         existing_paths = [path for path in paths if path.exists()]
-        if len(existing_paths) == 0:
+        if not existing_paths:
             raise ModelMissingError(model_path)
         self.ready = True
         return self.ready

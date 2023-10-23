@@ -11,8 +11,8 @@ MINICONDA_DOWNLOAD_URL = (
 )
 CONDA_BINARY = (
     os.popen("which conda").read().strip()
-    if os.system(f"conda --version") == 0
-    else f"$HOME/miniconda/condabin/conda"
+    if os.system("conda --version") == 0
+    else "$HOME/miniconda/condabin/conda"
 )
 
 if os.name == "nt":
@@ -28,7 +28,7 @@ def add_nightly_suffix_conda(binary_name: str) -> str:
     # Get today's date
     todays_date = date.today().strftime("%Y%m%d")
 
-    return binary_name + ".dev" + todays_date
+    return f"{binary_name}.dev{todays_date}"
 
 
 def install_conda_build(dry_run):
@@ -37,10 +37,10 @@ def install_conda_build(dry_run):
     """
 
     # Check if conda binary already exists
-    exit_code = os.system(f"conda --version")
+    exit_code = os.system("conda --version")
     if exit_code == 0:
         print(
-            f"'conda' already present on the system. Proceeding without a fresh conda installation."
+            "'conda' already present on the system. Proceeding without a fresh conda installation."
         )
         return
     try_and_handle(
@@ -54,10 +54,10 @@ def install_miniconda(dry_run):
     """
 
     # Check if conda binary already exists
-    exit_code = os.system(f"conda --version")
+    exit_code = os.system("conda --version")
     if exit_code == 0:
         print(
-            f"'conda' already present on the system. Proceeding without a fresh minconda installation."
+            "'conda' already present on the system. Proceeding without a fresh minconda installation."
         )
         return
     if os.name == "nt":
@@ -66,18 +66,19 @@ def install_miniconda(dry_run):
         )
         return
 
-    try_and_handle(f"rm -rf $HOME/miniconda", dry_run)
+    try_and_handle("rm -rf $HOME/miniconda", dry_run)
     try_and_handle(f"wget {MINICONDA_DOWNLOAD_URL} -O ~/miniconda.sh", dry_run)
 
-    try_and_handle(f"bash ~/miniconda.sh -f -b -p $HOME/miniconda", dry_run)
+    try_and_handle("bash ~/miniconda.sh -f -b -p $HOME/miniconda", dry_run)
     try_and_handle(
-        f"echo 'export PATH=$HOME/miniconda/bin:$PATH' >> ~/.bashrc", dry_run
+        "echo 'export PATH=$HOME/miniconda/bin:$PATH' >> ~/.bashrc", dry_run
     )
     try_and_handle(
-        f"ln -s $HOME/miniconda/bin/activate $HOME/miniconda/condabin/activate", dry_run
+        "ln -s $HOME/miniconda/bin/activate $HOME/miniconda/condabin/activate",
+        dry_run,
     )
     try_and_handle(
-        f"ln -s $HOME/miniconda/bin/deactivate $HOME/miniconda/condabin/deactivate",
+        "ln -s $HOME/miniconda/bin/deactivate $HOME/miniconda/condabin/deactivate",
         dry_run,
     )
 

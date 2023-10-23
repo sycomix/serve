@@ -63,7 +63,7 @@ def detect_model_server_version():
         sys.argv.remove("--release")
         return ts.__version__.strip()
 
-    return ts.__version__.strip() + "b" + str(date.today()).replace("-", "")
+    return f"{ts.__version__.strip()}b" + str(date.today()).replace("-", "")
 
 
 class BuildFrontEnd(setuptools.command.build_py.build_py):
@@ -85,9 +85,7 @@ class BuildFrontEnd(setuptools.command.build_py.build_py):
         try:
             os.mkdir(front_end_bin_dir)
         except OSError as exc:
-            if exc.errno == errno.EEXIST and os.path.isdir(front_end_bin_dir):
-                pass
-            else:
+            if exc.errno != errno.EEXIST or not os.path.isdir(front_end_bin_dir):
                 raise
 
         if os.path.exists(self.source_server_file):

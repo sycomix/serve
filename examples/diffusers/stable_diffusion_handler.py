@@ -39,10 +39,10 @@ class DiffusersHandler(BaseHandler, ABC):
         )
         # Loading the model and tokenizer from checkpoint and config files based on the user's choice of mode
         # further setup config can be added.
-        with zipfile.ZipFile(model_dir + "/model.zip", "r") as zip_ref:
-            zip_ref.extractall(model_dir + "/model")
+        with zipfile.ZipFile(f"{model_dir}/model.zip", "r") as zip_ref:
+            zip_ref.extractall(f"{model_dir}/model")
 
-        self.pipe = DiffusionPipeline.from_pretrained(model_dir + "/model")
+        self.pipe = DiffusionPipeline.from_pretrained(f"{model_dir}/model")
         self.pipe.to(self.device)
         logger.info("Diffusion model from path %s loaded successfully", model_dir)
 
@@ -89,7 +89,4 @@ class DiffusersHandler(BaseHandler, ABC):
         Returns:
             (list): Returns a list of the images.
         """
-        images = []
-        for image in inference_output:
-            images.append(np.array(image).tolist())
-        return images
+        return [np.array(image).tolist() for image in inference_output]

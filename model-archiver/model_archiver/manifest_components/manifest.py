@@ -25,13 +25,11 @@ class Manifest(object):
         self.manifest_dict = self.__to_dict__()
 
     def __to_dict__(self):
-        manifest_dict = {}
-
-        manifest_dict["createdOn"] = self.creation_time
-
-        manifest_dict["runtime"] = self.runtime.value
-
-        manifest_dict["model"] = self.model.__to_dict__()
+        manifest_dict = {
+            "createdOn": self.creation_time,
+            "runtime": self.runtime.value,
+            "model": self.model.__to_dict__(),
+        }
 
         if self.archiver_version is not None:
             manifest_dict["archiverVersion"] = self.archiver_version

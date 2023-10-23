@@ -30,7 +30,7 @@ class TransformersKserveHandler(TransformersSeqClassifierHandler):
         attention_mask_batch = None
         input_ids = None
         attention_mask = None
-        for idx, data in enumerate(requests):
+        for data in requests:
             if (
                 all(k in data for k in ["name", "shape", "datatype", "data"])
                 and data["datatype"] != "BYTES"
@@ -42,11 +42,7 @@ class TransformersKserveHandler(TransformersSeqClassifierHandler):
                     attention_mask = torch.tensor(data["data"]).unsqueeze(dim=0).to(self.device)
                 else:
                     raise ValueError(
-                        "{} {} {}".format(
-                            "Unknown input:",
-                            data["name"],
-                            "Valid inputs are ['input_ids', 'attention_masks']",
-                        )
+                        f"""Unknown input: {data["name"]} Valid inputs are ['input_ids', 'attention_masks']"""
                     )
                 input_ids_batch = input_ids
                 attention_mask_batch = attention_mask
@@ -107,9 +103,7 @@ class TransformersKserveHandler(TransformersSeqClassifierHandler):
             text, self.tokenizer, self.device, self.setup_config["mode"]
         )
         all_tokens = get_word_token(input_ids, self.tokenizer)
-        response = {}
-        response["words"] = all_tokens
-
+        response = {"words": all_tokens}
         attributions, delta = self.lig.attribute(
             inputs=input_ids,
             baselines=ref_input_ids,

@@ -83,9 +83,9 @@ def transformers_model_dowloader(
     try:
         os.mkdir(NEW_DIR)
     except OSError:
-        print("Creation of directory %s failed" % NEW_DIR)
+        print(f"Creation of directory {NEW_DIR} failed")
     else:
-        print("Successfully created directory %s " % NEW_DIR)
+        print(f"Successfully created directory {NEW_DIR} ")
 
     print(
         "Save model and tokenizer/ Torchscript model based on the setting from setup_config",
@@ -118,7 +118,7 @@ def transformers_model_dowloader(
                 traced_model,
                 os.path.join(
                     NEW_DIR,
-                    "traced_{}_model_neuron_batch_{}.pt".format(model_name, batch_size),
+                    f"traced_{model_name}_model_neuron_batch_{batch_size}.pt",
                 ),
             )
         elif hardware == "neuronx":
@@ -133,9 +133,7 @@ def transformers_model_dowloader(
                 traced_model,
                 os.path.join(
                     NEW_DIR,
-                    "traced_{}_model_neuronx_batch_{}.pt".format(
-                        model_name, batch_size
-                    ),
+                    f"traced_{model_name}_model_neuronx_batch_{batch_size}.pt",
                 ),
             )
         else:
@@ -160,10 +158,7 @@ if __name__ == "__main__":
     do_lower_case = settings["do_lower_case"]
     max_length = settings["max_length"]
     save_mode = settings["save_mode"]
-    if save_mode == "torchscript":
-        torchscript = True
-    else:
-        torchscript = False
+    torchscript = save_mode == "torchscript"
     hardware = settings.get("hardware")
     batch_size = int(settings.get("batch_size", "1"))
 

@@ -83,9 +83,7 @@ def model():
     classifier_head = RobertaClassificationHead(
         num_classes=num_classes, input_dim=input_dim
     )
-    model = XLMR_BASE_ENCODER.get_model(head=classifier_head, load_weights=False)
-
-    yield model
+    yield XLMR_BASE_ENCODER.get_model(head=classifier_head, load_weights=False)
 
 
 @pytest.fixture(scope="module")
@@ -146,7 +144,7 @@ def create_mar_file(work_dir, session_mocker, jit_file_path, model_archiver):
     """
     model_name = "scriptable_tokenizer_untrained"
 
-    mar_file_path = os.path.join(work_dir, model_name + ".mar")
+    mar_file_path = os.path.join(work_dir, f"{model_name}.mar")
 
     args = Namespace(
         model_name=model_name,

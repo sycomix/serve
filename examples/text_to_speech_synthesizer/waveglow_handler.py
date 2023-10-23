@@ -61,7 +61,7 @@ class WaveGlowSpeechSynthesizer(BaseHandler):
             raise RuntimeError("This model is not supported on CPU machines.")
         self.device = torch.device("cuda:" + str(properties.get("gpu_id")))
 
-        with zipfile.ZipFile(model_dir + "/tacotron.zip", "r") as zip_ref:
+        with zipfile.ZipFile(f"{model_dir}/tacotron.zip", "r") as zip_ref:
             zip_ref.extractall(model_dir)
 
         waveglow_checkpoint = torch.load(
@@ -107,13 +107,11 @@ class WaveGlowSpeechSynthesizer(BaseHandler):
                 device=self.device, dtype=torch.int64
             )
             mel, _, _ = self.tacotron2_model.infer(data, input_lengths)
-            audio = self.waveglow_model.infer(mel)
-
-            return audio
+            return self.waveglow_model.infer(mel)
 
     def postprocess(self, inference_output):
         audio_numpy = inference_output[0].data.cpu().numpy()
-        path = "/tmp/{}.wav".format(uuid.uuid4().hex)
+        path = f"/tmp/{uuid.uuid4().hex}.wav"
         write(path, 22050, audio_numpy)
         with open(path, "rb") as output:
             data = output.read()

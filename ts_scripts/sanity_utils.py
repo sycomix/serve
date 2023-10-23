@@ -39,12 +39,10 @@ def validate_model_on_gpu():
     # 2. Models are successfully UNregistered between subsequent calls
     import nvgpu
 
-    model_loaded = False
-    for info in nvgpu.gpu_info():
-        if info["mem_used"] > 0 and info["mem_used_percent"] > 0.0:
-            model_loaded = True
-            break
-    return model_loaded
+    return any(
+        info["mem_used"] > 0 and info["mem_used_percent"] > 0.0
+        for info in nvgpu.gpu_info()
+    )
 
 
 def load_model_to_validate():
@@ -53,10 +51,7 @@ def load_model_to_validate():
         assert isinstance(model_list, list)
 
     print(model_list)
-    models_to_validate = {}
-    for m in model_list:
-        models_to_validate[m["name"]] = m
-
+    models_to_validate = {m["name"]: m for m in model_list}
     # models_to_validate = {m["name"]: m for m in model_list}
     assert len(models_to_validate) == len(
         model_list
@@ -65,8 +60,7 @@ def load_model_to_validate():
 
 
 def test_gpu_setup():
-    is_gpu_instance = utils.is_gpu_instance()
-    if is_gpu_instance:
+    if is_gpu_instance := utils.is_gpu_instance():
         assert torch.cuda.is_available(), "## Ohh its NOT running on GPU !"
 
 
@@ -134,7 +128,7 @@ def run_rest_test(model, register_model=True, unregister_model=True):
 
     # For each input execute inference n=4 times
     for input in model_inputs:
-        for i in range(4):
+        for _ in range(4):
             response = ts.run_inference(model_name, input)
             if response and response.status_code == 200:
                 print(f"## Successfully ran inference on {model_name} model.")
@@ -187,7 +181,7 @@ def test_sanity():
         k: v for k, v in models_to_validate.items() if k != "resnet-18"
     }
 
-    for _, model in models_to_validate.items():
+    for model in models_to_validate.values():
         run_grpc_test(model)
         run_rest_test(model)
 
@@ -230,7 +224,7 @@ def test_workflow_sanity():
     if response and response.status_code == 200:
         print(response.text)
     else:
-        print(f"## Failed to register workflow")
+        print("## Failed to register workflow")
         sys.exit(1)
 
     # Run prediction on workflow
@@ -247,7 +241,7 @@ def test_workflow_sanity():
     if response and response.status_code == 200:
         print(response.text)
     else:
-        print(f"## Failed to unregister workflow")
+        print("## Failed to unregister workflow")
         sys.exit(1)
 
     stopped = ts.stop_torchserve()

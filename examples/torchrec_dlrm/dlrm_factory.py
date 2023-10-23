@@ -102,13 +102,13 @@ class DLRMFactory(type):
             QuantEmbeddingBagCollectionSharder(),
         ]
 
-        constraints = {}
-        for feature_name in model_config.id_list_features_keys:
-            constraints[f"t_{feature_name}"] = ParameterConstraints(
+        constraints = {
+            f"t_{feature_name}": ParameterConstraints(
                 sharding_types=[ShardingType.TABLE_WISE.value],
                 compute_kernels=[EmbeddingComputeKernel.QUANT.value],
             )
-
+            for feature_name in model_config.id_list_features_keys
+        }
         module = quantize_embeddings(module, dtype=torch.qint8, inplace=True)
 
         # The planner will decide how the model memory will be allocated.

@@ -6,14 +6,12 @@ import management_pb2_grpc
 
 def get_inference_stub():
     channel = grpc.insecure_channel('localhost:7070')
-    stub = inference_pb2_grpc.InferenceAPIsServiceStub(channel)
-    return stub
+    return inference_pb2_grpc.InferenceAPIsServiceStub(channel)
 
 
 def get_management_stub():
     channel = grpc.insecure_channel('localhost:7071')
-    stub = management_pb2_grpc.ManagementAPIsServiceStub(channel)
-    return stub
+    return management_pb2_grpc.ManagementAPIsServiceStub(channel)
 
 
 def run_management_api(api_name, **kwargs):

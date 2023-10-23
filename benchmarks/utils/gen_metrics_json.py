@@ -98,14 +98,16 @@ def gen_metrics_from_csv(csv_dict, stats_file_path):
     for k, v in csv_dict.items():
         if k in STATS_METRICS_CONFIG:
             metric_config = STATS_METRICS_CONFIG[k]
-            metrics_dict_list.append({
-                "MetricName": '{}_{}'.
-                    format(csv_dict["Model"], metric_config["name"]),
-                "Dimensions": [
-                    {"Name": "batch_size", "Value": csv_dict["Batch size"]}
-                ],
-                "Unit": metric_config['unit'],
-                "Value": float(v)})
+            metrics_dict_list.append(
+                {
+                    "MetricName": f'{csv_dict["Model"]}_{metric_config["name"]}',
+                    "Dimensions": [
+                        {"Name": "batch_size", "Value": csv_dict["Batch size"]}
+                    ],
+                    "Unit": metric_config['unit'],
+                    "Value": float(v),
+                }
+            )
 
     with open(stats_file_path, 'w') as stats_file:
         json.dump(metrics_dict_list, stats_file, indent = 4)
@@ -138,13 +140,15 @@ def gen_metrics_from_log(csv_dict, metrics_log_file_path, raw_metrics_file_path)
                 continue
             dimensions = parse_segments_1(csv_dict, segments[1])
             timestamp = parse_segments_2(segments[2])
-            metrics_dict_list.append({
-                "MetricName": '{}_{}'.format(csv_dict["Model"], name),
-                "Dimensions": dimensions,
-                "Unit": unit,
-                "Value": float(value),
-                "Timestamp": timestamp
-            })
+            metrics_dict_list.append(
+                {
+                    "MetricName": f'{csv_dict["Model"]}_{name}',
+                    "Dimensions": dimensions,
+                    "Unit": unit,
+                    "Value": float(value),
+                    "Timestamp": timestamp,
+                }
+            )
 
     with open(raw_metrics_file_path, 'w') as raw_file:
         json.dump(metrics_dict_list, raw_file, indent=4)

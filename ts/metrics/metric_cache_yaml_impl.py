@@ -173,6 +173,8 @@ class MetricsCacheYamlImpl(MetricCacheAbstract):
         """
         keys = []
         for metric_type, metric in self.cache.items():
-            for metric_name in metric.keys():
-                keys.append(f"{metric_type.value}:{metric_name}")
+            keys.extend(
+                f"{metric_type.value}:{metric_name}"
+                for metric_name in metric.keys()
+            )
         return keys

@@ -126,9 +126,7 @@ def get_pipeline_driver(model, world_size, ctx):
         checkpoint_prefix=checkpoint_prefix,
     )
 
-    # Inject the pipeline forward method if necessary
-    if model_type == "HF":
-        inject_pipeline_forward(model, pipe_driver)
-        return model
-    else:
+    if model_type != "HF":
         return pipe_driver
+    inject_pipeline_forward(model, pipe_driver)
+    return model

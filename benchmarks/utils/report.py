@@ -36,7 +36,7 @@ class Report:
     def _get_mode(self, csv_file):
         cfg = csv_file.split("/")[-2]
         cfg = cfg.split("_")
-        mode = cfg[0] + "_" + cfg[1]
+        mode = f"{cfg[0]}_{cfg[1]}"
         self.mode = mode
 
     def read_csv(self, csv_file):
@@ -58,12 +58,7 @@ class Report:
 
 
 def metric_valid(key, obs_val, exp_val, threshold):
-    # In case of throughput, higher is better
-    # In case of memory, lower is better.
-    # We ignore lower values for memory related metrices
-    lower = False
-    if "throughput" not in key:
-        lower = True
+    lower = "throughput" not in key
     return check_if_within_threshold(exp_val, obs_val, threshold) or (
         (obs_val < exp_val and lower) or (obs_val > exp_val and not lower)
     )

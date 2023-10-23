@@ -70,7 +70,7 @@ class DALIHandler(ImageClassifier):
             last_batch_padded=True,
         )
         result = []
-        for _, data in enumerate(datam):
+        for data in datam:
             result.append(data[0]["data"])
             break
 

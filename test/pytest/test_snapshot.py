@@ -40,9 +40,9 @@ def test_snapshot_created_on_start_and_stop():
 def snapshot_created_on_management_api_invoke(model_mar="densenet161.mar"):
     test_utils.delete_all_snapshots()
     test_utils.start_torchserve()
-    mar_path = "mar_path_{}".format(model_mar[0:-4])
+    mar_path = f"mar_path_{model_mar[:-4]}"
     if mar_path in test_utils.mar_file_table:
-        requests.post('http://127.0.0.1:8081/models?url=' + model_mar)
+        requests.post(f'http://127.0.0.1:8081/models?url={model_mar}')
     else:
         requests.post('http://127.0.0.1:8081/models?url=https://torchserve.pytorch.org/mar_files/'
                   + model_mar)
@@ -92,8 +92,6 @@ def test_start_from_read_only_snapshot():
         response = requests.get('http://127.0.0.1:8081/models/')
     except:
         assert False, "Something is not right!! Failed to start Torchserve using Read Only Snapshot!!"
-    else:
-        assert True, "Successfully started and restored Torchserve state using a Read Only Snapshot"
 
 
 def test_no_config_snapshots_cli_option():
@@ -105,7 +103,7 @@ def test_no_config_snapshots_cli_option():
     test_utils.delete_all_snapshots()
     test_utils.start_torchserve(no_config_snapshots=True)
     test_utils.stop_torchserve()
-    assert len(glob.glob('logs/config/*.cfg')) == 0
+    assert not glob.glob('logs/config/*.cfg')
 
 
 def test_start_from_default():
@@ -128,7 +126,7 @@ def test_start_from_non_existing_snapshot():
     try:
         response = requests.get('http://127.0.0.1:8081/models/')
     except:
-        assert True, "Failed to start Torchserve using a Non Existing Snapshot"
+        pass
     else:
         assert False, "Something is not right!! Successfully started Torchserve " \
                       "using Non Existing Snapshot File!!"
@@ -141,7 +139,7 @@ def test_torchserve_init_with_non_existent_model_store():
     try:
         response = requests.get('http://127.0.0.1:8081/models/')
     except:
-        assert True, "Failed to start Torchserve using non existent model-store directory"
+        pass
     else:
         assert False, "Something is not right!! Successfully started Torchserve " \
                       "using non existent directory!!"
@@ -168,7 +166,7 @@ def test_restart_torchserve_with_last_snapshot_with_model_mar_removed():
     try:
         response = requests.get('http://127.0.0.1:8081/models/')
     except:
-        assert True, "Failed to start Torchserve properly as reqd model mar file is missing!!"
+        pass
     else:
         assert False, "Something is not right!! Successfully started Torchserve without reqd mar file"
     finally:
@@ -200,8 +198,6 @@ def test_replace_mar_file_with_dummy():
         assert json.loads(response.content)['models'][0]['modelName'] == "densenet161"
     except:
         assert False, "Default manifest does not work"
-    else:
-        assert True, "Successfully started Torchserve with a dummy mar file (ie. default manifest)"
     finally:
         test_utils.unregister_model("densenet161")
         test_utils.delete_all_snapshots()
@@ -243,7 +239,7 @@ def test_restart_torchserve_with_one_of_model_mar_removed():
     try:
         response = requests.get('http://127.0.0.1:8081/models/')
     except:
-        assert True, "Failed to start Torchserve as one of reqd model mar file is missing"
+        pass
     else:
         assert False, "Something is not right!! Started Torchserve successfully with a " \
                       "reqd model mar file missing from the model store!!"

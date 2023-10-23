@@ -8,16 +8,14 @@ from ts.service import emit_metrics
 
 
 def get_model_key(name, unit, req_id, model_name):
-    dimensions = list()
-    dimensions.append(Dimension("ModelName", model_name))
+    dimensions = [Dimension("ModelName", model_name)]
     dimensions.append(Dimension("Level", "Model"))
     dim_str = [name, unit, str(req_id)] + [str(d) for d in dimensions]
     return '-'.join(dim_str)
 
 
 def get_error_key(name, unit):
-    dimensions = list()
-    dimensions.append(Dimension("Level", "Error"))
+    dimensions = [Dimension("Level", "Error")]
     dim_str = [name, unit, 'None'] + [str(d) for d in dimensions]
     return '-'.join(dim_str)
 

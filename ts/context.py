@@ -63,9 +63,7 @@ class Context(object):
         self._metrics = metrics
 
     def get_request_id(self, idx: int = 0) -> Optional[str]:
-        if self.request_ids is None:
-            return None
-        return self.request_ids.get(idx)
+        return None if self.request_ids is None else self.request_ids.get(idx)
 
     def get_request_header(self, idx: int, key: str) -> Optional[str]:
         return self._request_processor[idx].get_request_property(key)

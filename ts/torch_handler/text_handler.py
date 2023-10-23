@@ -2,6 +2,7 @@
 Base module for all text based default handler.
 Contains various text based utility methods
 """
+
 import logging
 import os
 import re
@@ -22,8 +23,7 @@ logger = logging.getLogger(__name__)
 
 
 CONTRACTIONS_PATTERN = re.compile(
-    "({})".format("|".join(CONTRACTION_MAP.keys())),
-    flags=re.IGNORECASE | re.DOTALL,
+    f'({"|".join(CONTRACTION_MAP.keys())})', flags=re.IGNORECASE | re.DOTALL
 )
 
 
@@ -109,8 +109,7 @@ class TextHandler(BaseHandler, ABC):
         """
         Removes html tags
         """
-        clean_text = CLEANUP_REGEX.sub("", text)
-        return clean_text
+        return CLEANUP_REGEX.sub("", text)
 
     def _remove_puncutation(self, *args, **kwargs):
         """
@@ -131,9 +130,7 @@ class TextHandler(BaseHandler, ABC):
         """
         Constructs word tokens from text
         """
-        # Remove unicode space character from BPE Tokeniser
-        tokens = [token.replace("Ġ", "") for token in input_tokens]
-        return tokens
+        return [token.replace("Ġ", "") for token in input_tokens]
 
     def summarize_attributions(self, attributions):
         """

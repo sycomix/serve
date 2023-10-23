@@ -82,14 +82,14 @@ class MicroBatching(object):
 
     def _create_queues(self):
         # Set up processing queues
-        self.queues[HANDLER_METHODS[0] + "_in"] = queue.Queue()
+        self.queues[f"{HANDLER_METHODS[0]}_in"] = queue.Queue()
         for i in range(len(HANDLER_METHODS) - 1):
             # Each "out" queue is the "in" queue of the next processing step
-            self.queues[HANDLER_METHODS[i] + "_out"] = queue.Queue()
-            self.queues[HANDLER_METHODS[i + 1] + "_in"] = self.queues[
-                HANDLER_METHODS[i] + "_out"
+            self.queues[f"{HANDLER_METHODS[i]}_out"] = queue.Queue()
+            self.queues[f"{HANDLER_METHODS[i + 1]}_in"] = self.queues[
+                f"{HANDLER_METHODS[i]}_out"
             ]
-        self.queues[HANDLER_METHODS[-1] + "_out"] = queue.Queue()
+        self.queues[f"{HANDLER_METHODS[-1]}_out"] = queue.Queue()
 
     def _update_threads(self):
         for c in HANDLER_METHODS:
@@ -99,8 +99,8 @@ class MicroBatching(object):
 
             # Scale up threads if necessary
             while tgt_parallelism > cur_parallelism():
-                in_queue = self.queues[c + "_in"]
-                out_queue = self.queues[c + "_out"]
+                in_queue = self.queues[f"{c}_in"]
+                out_queue = self.queues[f"{c}_out"]
                 call = getattr(self.handler, c)
                 event = threading.Event()
 
@@ -120,14 +120,14 @@ class MicroBatching(object):
     def handle(self, data):
         num_batches = 0
         for idx, i in enumerate(range(0, len(data), self.micro_batch_size)):
-            self.queues[HANDLER_METHODS[0] + "_in"].put_nowait(
+            self.queues[f"{HANDLER_METHODS[0]}_in"].put_nowait(
                 (idx, data[i : i + self.micro_batch_size])
             )
             num_batches += 1
 
         output = []
         while len(output) != num_batches:
-            output.append(self.queues[HANDLER_METHODS[-1] + "_out"].get())
+            output.append(self.queues[f"{HANDLER_METHODS[-1]}_out"].get())
 
         return [item for batch in sorted(output) for item in batch[1]]
 
@@ -152,8 +152,7 @@ class MicroBatching(object):
         self.handler.context = context
         metrics = self.handler.context.metrics
 
-        is_profiler_enabled = os.environ.get("ENABLE_TORCH_PROFILER", None)
-        if is_profiler_enabled:
+        if is_profiler_enabled := os.environ.get("ENABLE_TORCH_PROFILER", None):
             if PROFILER_AVAILABLE:
                 output, _ = self.handler._infer_with_profiler(data=data)
             else:
@@ -161,14 +160,13 @@ class MicroBatching(object):
                     "Profiler is enabled but current version of torch does not support."
                     "Install torch>=1.8.1 to use profiler."
                 )
+        elif self.handler._is_describe():
+            output = [self.handler.describe_handle()]
+        elif self.handler._is_explain():
+            data_preprocess = self.handler.preprocess(data)
+            output = self.handler.explain_handle(data_preprocess, data)
         else:
-            if self.handler._is_describe():
-                output = [self.handler.describe_handle()]
-            elif self.handler._is_explain():
-                data_preprocess = self.handler.preprocess(data)
-                output = self.handler.explain_handle(data_preprocess, data)
-            else:
-                output = self.handle(data)
+            output = self.handle(data)
 
         stop_time = time.time()
         metrics.add_time(

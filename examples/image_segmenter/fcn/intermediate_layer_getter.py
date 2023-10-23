@@ -42,7 +42,7 @@ class IntermediateLayerGetter(nn.ModuleDict):
             raise ValueError("return_layers are not present in model")
 
         orig_return_layers = return_layers
-        return_layers = {k: v for k, v in return_layers.items()}
+        return_layers = dict(return_layers.items())
         layers = OrderedDict()
         for name, module in model.named_children():
             layers[name] = module

@@ -18,10 +18,7 @@ def download_save(url, path=None, filename=None):
 
 
 def rm_file(path, regex=False):
-    if regex:
-        file_list = glob.glob(path, recursive=True)
-    else:
-        file_list = [path]
+    file_list = glob.glob(path, recursive=True) if regex else [path]
     for file in file_list:
         path = Path(file)
         if os.path.exists(path):

@@ -35,8 +35,7 @@ def fused_add_tanh_sigmoid_multiply(input_a, input_b, n_channels):
     in_act = input_a + input_b
     t_act = torch.tanh(in_act[:, :n_channels_int, :])
     s_act = torch.sigmoid(in_act[:, n_channels_int:, :])
-    acts = t_act * s_act
-    return acts
+    return t_act * s_act
 
 
 class Invertible1x1Conv(torch.nn.Module):
@@ -71,7 +70,7 @@ class Invertible1x1Conv(torch.nn.Module):
                 # Reverse computation
                 W_inverse = W.float().inverse()
                 W_inverse = Variable(W_inverse[..., None])
-                if z.type() == 'torch.cuda.HalfTensor' or z.type() == 'torch.HalfTensor':
+                if z.type() in ['torch.cuda.HalfTensor', 'torch.HalfTensor']:
                     W_inverse = W_inverse.half()
                 self.W_inverse = W_inverse
             z = F.conv1d(z, self.W_inverse, bias=None, stride=1, padding=0)
@@ -125,10 +124,7 @@ class WN(torch.nn.Module):
             self.cond_layers.append(cond_layer)
 
             # last one is not necessary
-            if i < n_layers - 1:
-                res_skip_channels = 2 * n_channels
-            else:
-                res_skip_channels = n_channels
+            res_skip_channels = 2 * n_channels if i < n_layers - 1 else n_channels
             res_skip_layer = torch.nn.Conv1d(n_channels, res_skip_channels, 1)
             res_skip_layer = torch.nn.utils.weight_norm(
                 res_skip_layer, name='weight')
@@ -151,10 +147,7 @@ class WN(torch.nn.Module):
             else:
                 skip_acts = res_skip_acts
 
-            if i == 0:
-                output = skip_acts
-            else:
-                output = skip_acts + output
+            output = skip_acts if i == 0 else skip_acts + output
         return self.end(output)
 
 

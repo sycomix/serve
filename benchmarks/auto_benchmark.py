@@ -8,10 +8,10 @@ import ruamel.yaml
 from utils import gen_md_report, gen_metrics_json, gen_model_config_json
 
 CWD = os.getcwd()
-MODEL_JSON_CONFIG_PATH = CWD + "/model_json_config"
+MODEL_JSON_CONFIG_PATH = f"{CWD}/model_json_config"
 BENCHMARK_TMP_PATH = "/tmp/benchmark"
 BENCHMARK_REPORT_PATH = "/tmp/ts_benchmark"
-TS_LOGS_PATH = CWD + "/logs"
+TS_LOGS_PATH = f"{CWD}/logs"
 MODEL_STORE = "/tmp/model_store"
 WF_STORE = "/tmp/wf_store"
 
@@ -23,9 +23,9 @@ class BenchmarkConfig:
         self.skip_upload = skip_upload
         self.bm_config = {}
         yesterday = datetime.date.today() - datetime.timedelta(days=1)
-        self.bm_config["version"] = "torchserve-nightly=={}.{}.{}".format(
-            yesterday.year, yesterday.month, yesterday.day
-        )
+        self.bm_config[
+            "version"
+        ] = f"torchserve-nightly=={yesterday.year}.{yesterday.month}.{yesterday.day}"
         self.bm_config["hardware"] = "cpu"
 
     def ts_version(self, version):
@@ -33,9 +33,9 @@ class BenchmarkConfig:
             if k == "branch":
                 self.bm_config["version"] = v
             elif k == "nightly":
-                self.bm_config["version"] = "torchserve-nightly=={}".format(v)
+                self.bm_config["version"] = f"torchserve-nightly=={v}"
             elif k == "release":
-                self.bm_config["version"] = "torchserve=={}".format(v)
+                self.bm_config["version"] = f"torchserve=={v}"
             break
 
     def models(self, model_files):
@@ -48,14 +48,12 @@ class BenchmarkConfig:
         cmd_options = []
         for key_value in cmd:
             for k, v in key_value.items():
-                if k == "cmd":
+                if k == "--namespace":
+                    cmd_options.extend((k, "".join(v)))
+                elif k == "cmd":
                     cmd_options.append(v)
-                elif k == "--namespace":
-                    cmd_options.append(k)
-                    cmd_options.append("".join(v))
                 else:
-                    cmd_options.append(k)
-                    cmd_options.append(v)
+                    cmd_options.extend((k, v))
                 break
 
         self.bm_config["metrics_cmd"] = " ".join(cmd_options)
@@ -64,17 +62,13 @@ class BenchmarkConfig:
         cmd_options = []
         for key_value in cmd:
             for k, v in key_value.items():
-                if k == "cmd":
-                    cmd_options.append(v)
-                elif k == "dest":
+                if k == "dest":
                     for i in range(len(v)):
                         if v[i] == "today()":
                             today = datetime.date.today()
-                            v[i] = "{}-{}-{}".format(today.year, today.month, today.day)
+                            v[i] = f"{today.year}-{today.month}-{today.day}"
                             break
-                    cmd_options.append(
-                        "{}/{}".format("/".join(v), self.bm_config["version"])
-                    )
+                    cmd_options.append(f'{"/".join(v)}/{self.bm_config["version"]}')
                 else:
                     cmd_options.append(v)
                 break
@@ -96,9 +90,9 @@ class BenchmarkConfig:
                 report_cmd = v
 
         self.bm_config["model_config_path"] = (
-            "{}/{}".format(MODEL_JSON_CONFIG_PATH, self.bm_config["hardware"])
+            f'{MODEL_JSON_CONFIG_PATH}/{self.bm_config["hardware"]}'
             if self.bm_config["hardware"] in ["cpu", "gpu", "neuron", "neuronx"]
-            else "{}/cpu".format(MODEL_JSON_CONFIG_PATH)
+            else f"{MODEL_JSON_CONFIG_PATH}/cpu"
         )
 
         if self.skip_ts_install:
@@ -108,7 +102,7 @@ class BenchmarkConfig:
             self.report_cmd(report_cmd)
 
         for k, v in self.bm_config.items():
-            print("{}={}".format(k, v))
+            print(f"{k}={v}")
 
 
 def load_benchmark_config(bm_config_path, skip_ts_install, skip_upload):
@@ -142,9 +136,9 @@ def install_torchserve(skip_ts_install, hw, ts_version):
     if ts_version.startswith("torchserve==") or ts_version.startswith(
         "torchserve-nightly=="
     ):
-        ts_install_cmd = "pip install {}".format(ts_version)
+        ts_install_cmd = f"pip install {ts_version}"
     else:
-        cmd = "git checkout {}".format(ts_version)
+        cmd = f"git checkout {ts_version}"
         execute(cmd, wait=True)
 
     # install_dependencies.py
@@ -168,7 +162,7 @@ def setup_benchmark_path(model_config_path):
         shutil.rmtree(benchmark_path, ignore_errors=True)
         os.makedirs(benchmark_path, exist_ok=True)
 
-        print("successfully setup benchmark_path={}".format(benchmark_path))
+        print(f"successfully setup benchmark_path={benchmark_path}")
 
 
 def build_model_json_config(models):
@@ -176,7 +170,7 @@ def build_model_json_config(models):
         if model.startswith("/"):
             input_file = model
         else:
-            input_file = CWD + "/benchmarks/models_config/{}".format(model)
+            input_file = f"{CWD}/benchmarks/models_config/{model}"
         gen_model_config_json.convert_yaml_to_json(input_file, MODEL_JSON_CONFIG_PATH)
 
 
@@ -195,20 +189,15 @@ def run_benchmark(bm_config):
             # call benchmark-ab.py
             shutil.rmtree(TS_LOGS_PATH, ignore_errors=True)
             shutil.rmtree(BENCHMARK_TMP_PATH, ignore_errors=True)
-            cmd = (
-                "python ./benchmarks/benchmark-ab.py --tmp_dir /tmp --report_location /tmp --config_properties "
-                "./benchmarks/config.properties --config {}/{}".format(
-                    bm_config["model_config_path"], model_json_config
-                )
-            )
+            cmd = f'python ./benchmarks/benchmark-ab.py --tmp_dir /tmp --report_location /tmp --config_properties ./benchmarks/config.properties --config {bm_config["model_config_path"]}/{model_json_config}'
             execute(cmd, wait=True)
 
             # generate stats metrics from ab_report.csv
-            bm_model = model_json_config[0 : -len(".json")]
+            bm_model = model_json_config[:-len(".json")]
 
             gen_metrics_json.gen_metric(
-                "{}/ab_report.csv".format(BENCHMARK_TMP_PATH),
-                "{}/logs/stats_metrics.json".format(BENCHMARK_TMP_PATH),
+                f"{BENCHMARK_TMP_PATH}/ab_report.csv",
+                f"{BENCHMARK_TMP_PATH}/logs/stats_metrics.json",
             )
 
             # load stats metrics to remote metrics storage
@@ -216,24 +205,22 @@ def run_benchmark(bm_config):
                 execute(bm_config["metrics_cmd"], wait=True)
 
             # cp benchmark logs to local
-            bm_model_log_path = "{}/{}".format(BENCHMARK_REPORT_PATH, bm_model)
+            bm_model_log_path = f"{BENCHMARK_REPORT_PATH}/{bm_model}"
             os.makedirs(bm_model_log_path, exist_ok=True)
-            csv_file = "{}/ab_report.csv".format(BENCHMARK_TMP_PATH)
+            csv_file = f"{BENCHMARK_TMP_PATH}/ab_report.csv"
             if os.path.exists(csv_file):
                 shutil.move(csv_file, bm_model_log_path)
-            cmd = "tar -cvzf {}/benchmark.tar.gz {}".format(
-                bm_model_log_path, BENCHMARK_TMP_PATH
-            )
+            cmd = f"tar -cvzf {bm_model_log_path}/benchmark.tar.gz {BENCHMARK_TMP_PATH}"
             execute(cmd, wait=True)
 
-            cmd = "tar -cvzf {}/logs.tar.gz {}".format(bm_model_log_path, TS_LOGS_PATH)
+            cmd = f"tar -cvzf {bm_model_log_path}/logs.tar.gz {TS_LOGS_PATH}"
             execute(cmd, wait=True)
-            print("finish benchmark {}".format(bm_model))
+            print(f"finish benchmark {bm_model}")
 
     # generate final report
     gen_md_report.iterate_subdir(
         BENCHMARK_REPORT_PATH,
-        "{}/report.md".format(BENCHMARK_REPORT_PATH),
+        f"{BENCHMARK_REPORT_PATH}/report.md",
         bm_config["hardware"],
         bm_config["version"],
     )
@@ -252,7 +239,7 @@ def clean_up_benchmark_env(bm_config):
 
 
 def execute(command, wait=False, stdout=None, stderr=None, shell=True):
-    print("execute: {}".format(command))
+    print(f"execute: {command}")
     cmd = Popen(
         command,
         shell=shell,
@@ -292,15 +279,10 @@ def main():
     )
 
     arguments = parser.parse_args()
-    skip_ts_config = (
-        False
-        if arguments.skip is not None and arguments.skip.lower() == "false"
-        else True
-    )
+    skip_ts_config = arguments.skip is None or arguments.skip.lower() != "false"
     skip_upload = (
-        True
-        if arguments.skip_upload is not None and arguments.skip_upload.lower() == "true"
-        else False
+        arguments.skip_upload is not None
+        and arguments.skip_upload.lower() == "true"
     )
     bm_config = load_benchmark_config(arguments.input, skip_ts_config, skip_upload)
     benchmark_env_setup(bm_config, skip_ts_config)

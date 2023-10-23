@@ -105,8 +105,8 @@ def launch_instance(
 
     if not response or len(response["Instances"]) < 1:
         raise Exception("Unable to launch the instance. Did not return any response")
-    
-    LOGGER.info(f"Instance launched successfully.")
+
+    LOGGER.info("Instance launched successfully.")
 
     return response["Instances"][0]
 
@@ -125,13 +125,13 @@ def get_instance_from_id(instance_id, region=DEFAULT_REGION):
     if not instance_id:
         raise Exception("No instance id provided")
     client = boto3.Session(region_name=region).client("ec2")
-    instance = client.describe_instances(InstanceIds=[instance_id])
-    if not instance:
+    if instance := client.describe_instances(InstanceIds=[instance_id]):
+        return instance["Reservations"][0]["Instances"][0]
+    else:
         raise Exception(
             "Unable to launch the instance. \
                          Did not return any reservations object"
         )
-    return instance["Reservations"][0]["Instances"][0]
 
 
 @retry(stop_max_attempt_number=16, wait_fixed=60000)
@@ -170,9 +170,7 @@ def get_instance_user(instance_id, region=DEFAULT_REGION):
     :return: <str> user name
     """
     instance = get_instance_from_id(instance_id, region)
-    # Modify here if an AMI other than Ubuntu AMI must be used.
-    user = "ubuntu"
-    return user
+    return "ubuntu"
 
 
 def get_instance_state(instance_id, region=DEFAULT_REGION):
@@ -308,11 +306,10 @@ def get_instance_details(instance_id, region=DEFAULT_REGION):
     """
     if not instance_id:
         raise Exception("No instance id provided")
-    instance = get_instance_from_id(instance_id, region=region)
-    if not instance:
+    if instance := get_instance_from_id(instance_id, region=region):
+        return get_instance_type_details(instance["InstanceType"], region=region)
+    else:
         raise Exception("Could not find instance")
-
-    return get_instance_type_details(instance["InstanceType"], region=region)
 
 
 def get_ec2_fabric_connection(instance_id, instance_pem_file, region):
@@ -324,13 +321,12 @@ def get_ec2_fabric_connection(instance_id, instance_pem_file, region):
     :return: Fabric connection object
     """
     user = get_instance_user(instance_id, region=region)
-    conn = Connection(
+    return Connection(
         user=user,
         host=get_public_ip(instance_id, region),
         inline_ssh_env=True,
         connect_kwargs={"key_filename": [instance_pem_file]},
     )
-    return conn
 
 
 def get_ec2_instance_tags(instance_id, region=DEFAULT_REGION, ec2_client=None):

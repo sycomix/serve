@@ -50,9 +50,7 @@ class TokenizerModelAdapter(nn.Module):
             self._dummy_param.device
         )
         # If a single sample is tokenized we need to add the batch dimension
-        if len(tokens.shape) < 2:
-            return tokens.unsqueeze(0)
-        return tokens
+        return tokens.unsqueeze(0) if len(tokens.shape) < 2 else tokens
 
 
 def main(args):

@@ -87,7 +87,7 @@ class ModelService(object):
         return self._signature
 
     # noinspection PyUnusedLocal
-    def handle(self, data, context):  # pylint: disable=unused-argument
+    def handle(self, data, context):    # pylint: disable=unused-argument
         """
         Backward compatible handle function.
 
@@ -98,7 +98,6 @@ class ModelService(object):
         """
         input_type = self._signature['input_type']
 
-        input_data = []
         data_name = self._signature["inputs"][0]["data_name"]
         form_data = data[0].get(data_name)
         if form_data is None:
@@ -108,17 +107,12 @@ class ModelService(object):
             form_data = data[0].get("data")
 
         if input_type == "application/json":
-            # user might not send content in HTTP request
             if isinstance(form_data, (bytes, bytearray)):
                 form_data = ast.literal_eval(form_data.decode("utf-8"))
 
-        input_data.append(form_data)
-
+        input_data = [form_data]
         ret = self.inference(input_data)
-        if isinstance(ret, list):
-            return ret
-
-        return [ret]
+        return ret if isinstance(ret, list) else [ret]
 
 
 class SingleNodeService(ModelService):

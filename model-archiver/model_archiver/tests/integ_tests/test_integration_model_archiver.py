@@ -24,9 +24,7 @@ def create_file_path(path):
     try:
         os.makedirs(path)
     except OSError as exc:
-        if exc.errno == errno.EEXIST and os.path.isdir(path):
-            pass
-        else:
+        if exc.errno != errno.EEXIST or not os.path.isdir(path):
             raise
 
 
@@ -49,7 +47,7 @@ def run_test(test, args, mocker):
     from model_archiver.model_packaging import generate_model_archive
 
     it = test.get("iterations", 1)
-    for i in range(it):
+    for _ in range(it):
         try:
             generate_model_archive()
         except Exception as exc:
@@ -177,9 +175,7 @@ def build_namespace(test):
     test["runtime"] = test.get("runtime", DEFAULT_RUNTIME)
     test["archive-format"] = test.get("archive-format", "default")
 
-    args = Namespace(**{k.replace("-", "_"): test[k] for k in keys})
-
-    return args
+    return Namespace(**{k.replace("-", "_"): test[k] for k in keys})
 
 
 def make_paths_absolute(test, keys):

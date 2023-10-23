@@ -88,7 +88,7 @@ def create_mar_file(work_dir, session_mocker, serialized_file, model_archiver):
     """
     model_name = "scriptable_tokenizer_untrained"
 
-    mar_file_path = Path(work_dir).joinpath(model_name + ".mar")
+    mar_file_path = Path(work_dir).joinpath(f"{model_name}.mar")
 
     args = Namespace(
         model_name=model_name,

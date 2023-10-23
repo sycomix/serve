@@ -84,13 +84,12 @@ def update_artifacts(input_dir, output_dir):
     # When there are WINDOW_LEN - 1 reports and we want to add the new report
     # and remove the oldest report
     for i, report_id in enumerate(list_dirs):
-        if i != report_id or (i + 1 == WINDOW_LEN - 1):
-            if i != report_id:
-                # When  report_id has a missing element in sequence
-                add_report_id, del_report_id = i, report_id
-            else:
-                # When report_id WINDOW_LEN-1 is missing
-                add_report_id, del_report_id = i + 1, (i + 2) % WINDOW_LEN
+        if i != report_id or i + 1 == WINDOW_LEN - 1:
+            add_report_id, del_report_id = (
+                (i, report_id)
+                if i != report_id
+                else (i + 1, (i + 2) % WINDOW_LEN)
+            )
             update_new_report(input_dir, output_dir, add_report_id, del_report_id)
             break
 

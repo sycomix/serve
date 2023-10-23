@@ -87,12 +87,9 @@ def setup_ort_session(model_pt_path):
     sess_options = ort.SessionOptions()
     sess_options.intra_op_num_threads = psutil.cpu_count(logical=True)
 
-    # Start an inference session
-    ort_session = ort.InferenceSession(
+    return ort.InferenceSession(
         model_pt_path, providers=providers, sess_options=sess_options
     )
-
-    return ort_session
 
 
 class BaseHandler(abc.ABC):
@@ -134,7 +131,7 @@ class BaseHandler(abc.ABC):
         if torch.cuda.is_available() and properties.get("gpu_id") is not None:
             self.map_location = "cuda"
             self.device = torch.device(
-                self.map_location + ":" + str(properties.get("gpu_id"))
+                f"{self.map_location}:" + str(properties.get("gpu_id"))
             )
         elif XLA_AVAILABLE:
             self.device = xm.xla_device()
@@ -149,10 +146,7 @@ class BaseHandler(abc.ABC):
         if "serializedFile" in self.manifest["model"]:
             serialized_file = self.manifest["model"]["serializedFile"]
             self.model_pt_path = os.path.join(model_dir, serialized_file)
-        # model def file
-        model_file = self.manifest["model"].get("modelFile", "")
-
-        if model_file:
+        if model_file := self.manifest["model"].get("modelFile", ""):
             logger.debug("Loading eager model")
             self.model = self._load_pickled_model(
                 model_dir, model_file, self.model_pt_path
@@ -160,13 +154,10 @@ class BaseHandler(abc.ABC):
             self.model.to(self.device)
             self.model.eval()
 
-        # Convert your model by following instructions: https://pytorch.org/tutorials/intermediate/nvfuser_intro_tutorial.html
-        # For TensorRT support follow instructions here: https://pytorch.org/TensorRT/getting_started/getting_started_with_python_api.html#getting-started-with-python-api
         elif self.model_pt_path.endswith(".pt"):
             self.model = self._load_torchscript_model(self.model_pt_path)
             self.model.eval()
 
-        # Convert your model by following instructions: https://pytorch.org/tutorials/advanced/super_resolution_with_onnxruntime.html
         elif self.model_pt_path.endswith(".onnx") and ONNX_AVAILABLE:
             self.model = setup_ort_session(self.model_pt_path)
             logger.info("Succesfully setup ort session")
@@ -198,7 +189,7 @@ class BaseHandler(abc.ABC):
         elif IPEX_AVAILABLE:
             self.model = self.model.to(memory_format=torch.channels_last)
             self.model = ipex.optimize(self.model)
-            logger.info(f"Compiled model with ipex")
+            logger.info("Compiled model with ipex")
 
         logger.debug("Model file %s loaded successfully", self.model_pt_path)
 
@@ -244,9 +235,7 @@ class BaseHandler(abc.ABC):
         model_class_definitions = list_classes_from_module(module)
         if len(model_class_definitions) != 1:
             raise ValueError(
-                "Expected only one class as model definition. {}".format(
-                    model_class_definitions
-                )
+                f"Expected only one class as model definition. {model_class_definitions}"
             )
 
         model_class = model_class_definitions[0]
@@ -324,8 +313,7 @@ class BaseHandler(abc.ABC):
         self.context = context
         metrics = self.context.metrics
 
-        is_profiler_enabled = os.environ.get("ENABLE_TORCH_PROFILER", None)
-        if is_profiler_enabled:
+        if is_profiler_enabled := os.environ.get("ENABLE_TORCH_PROFILER", None):
             if PROFILER_AVAILABLE:
                 output, _ = self._infer_with_profiler(data=data)
             else:
@@ -333,18 +321,17 @@ class BaseHandler(abc.ABC):
                     "Profiler is enabled but current version of torch does not support."
                     "Install torch>=1.8.1 to use profiler."
                 )
+        elif self._is_describe():
+            output = [self.describe_handle()]
         else:
-            if self._is_describe():
-                output = [self.describe_handle()]
+            data_preprocess = self.preprocess(data)
+
+            if self._is_explain():
+                output = self.explain_handle(data_preprocess, data)
+
             else:
-                data_preprocess = self.preprocess(data)
-
-                if not self._is_explain():
-                    output = self.inference(data_preprocess)
-                    output = self.postprocess(output)
-                else:
-                    output = self.explain_handle(data_preprocess, data)
-
+                output = self.inference(data_preprocess)
+                output = self.postprocess(output)
         stop_time = time.time()
         metrics.add_time(
             "HandlerTime", round((stop_time - start_time) * 1000, 2), None, "ms"
@@ -423,8 +410,7 @@ class BaseHandler(abc.ABC):
             if not target:
                 target = 0
 
-        output_explain = self.get_insights(data_preprocess, inputs, target)
-        return output_explain
+        return self.get_insights(data_preprocess, inputs, target)
 
     def _is_explain(self):
         if self.context and self.context.get_request_header(0, "explain"):

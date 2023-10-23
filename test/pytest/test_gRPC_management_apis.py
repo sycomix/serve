@@ -47,7 +47,7 @@ def __get_path_params(parsed_url):
         "model_name": path[1]
     }
     if len(path) == 3:
-        path_params.update({"model_version": path[2]})
+        path_params["model_version"] = path[2]
 
     return path_params
 
@@ -98,7 +98,7 @@ def test_management_apis():
     for item in test_data:
         try:
             api_name = item['type']
-            api = globals()["__get_" + api_name + "_params"]
+            api = globals()[f"__get_{api_name}_params"]
             params = api(parse.urlsplit(item['path']))
             test_gRPC_utils.run_management_api(api_mapping[api_name], **params)
         except grpc.RpcError as e:

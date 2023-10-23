@@ -70,9 +70,9 @@ def stop_torchserve(wait_for=10):
 # Takes model name and mar name from model zoo as input
 def register_model(model_name, protocol="http", host="localhost", port="8081"):
     print(f"## Registering {model_name} model")
-    model_zoo_url = "https://torchserve.s3.amazonaws.com"
     marfile = f"{model_name}.mar"
     if marfile not in mg.mar_set:
+        model_zoo_url = "https://torchserve.s3.amazonaws.com"
         marfile = f"{model_zoo_url}/mar_files/{model_name}.mar"
 
     params = (
@@ -82,23 +82,20 @@ def register_model(model_name, protocol="http", host="localhost", port="8081"):
         ("synchronous", "true"),
     )
     url = f"{protocol}://{host}:{port}/models"
-    response = requests.post(url, params=params, verify=False)
-    return response
+    return requests.post(url, params=params, verify=False)
 
 
 def run_inference(model_name, file_name, protocol="http", host="localhost", port="8080", timeout=120):
     print(f"## Running inference on {model_name} model")
     url = f"{protocol}://{host}:{port}/predictions/{model_name}"
     files = {"data": (file_name, open(file_name, "rb"))}
-    response = requests.post(url, files=files, timeout=timeout)
-    return response
+    return requests.post(url, files=files, timeout=timeout)
 
 
 def unregister_model(model_name, protocol="http", host="localhost", port="8081"):
     print(f"## Unregistering {model_name} model")
     url = f"{protocol}://{host}:{port}/models/{model_name}"
-    response = requests.delete(url, verify=False)
-    return response
+    return requests.delete(url, verify=False)
 
 
 def generate_grpc_client_stubs():
@@ -119,20 +116,17 @@ def register_workflow(workflow_name, protocol="http", host="localhost", port="80
         ("url", f"{model_zoo_url}/war_files/{workflow_name}.war"),
     )
     url = f"{protocol}://{host}:{port}/workflows"
-    response = requests.post(url, params=params, verify=False)
-    return response
+    return requests.post(url, params=params, verify=False)
 
 
 def unregister_workflow(workflow_name, protocol="http", host="localhost", port="8081"):
     print(f"## Unregistering {workflow_name} workflow")
     url = f"{protocol}://{host}:{port}/workflows/{workflow_name}"
-    response = requests.delete(url, verify=False)
-    return response
+    return requests.delete(url, verify=False)
 
 
 def workflow_prediction(workflow_name, file_name, protocol="http", host="localhost", port="8080", timeout=120):
     print(f"## Running inference on {workflow_name} workflow")
     url = f"{protocol}://{host}:{port}/wfpredict/{workflow_name}"
     files = {"data": (file_name, open(file_name, "rb"))}
-    response = requests.post(url, files=files, timeout=timeout)
-    return response
+    return requests.post(url, files=files, timeout=timeout)

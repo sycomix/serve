@@ -103,9 +103,7 @@ class TsModelLoader(ModelLoader):
 
         if module is None:
             raise ValueError(
-                "Unable to load module {}, make sure it is added to python path".format(
-                    handler
-                )
+                f"Unable to load module {handler}, make sure it is added to python path"
             )
         function_name = function_name or "handle"
 
@@ -148,16 +146,14 @@ class TsModelLoader(ModelLoader):
 
     def _load_default_handler(self, handler):
         module_name = ".{0}".format(handler)
-        module = importlib.import_module(module_name, "ts.torch_handler")
-        return module
+        return importlib.import_module(module_name, "ts.torch_handler")
 
     def _load_default_envelope(self, envelope):
         module_name = ".{0}".format(envelope)
         module = importlib.import_module(
             module_name, "ts.torch_handler.request_envelope"
         )
-        envelope_class = list_classes_from_module(module)[0]
-        return envelope_class
+        return list_classes_from_module(module)[0]
 
     def _get_function_entry_point(self, module, function_name):
         entry_point = getattr(module, function_name)
@@ -168,17 +164,13 @@ class TsModelLoader(ModelLoader):
         model_class_definitions = list_classes_from_module(module)
         if len(model_class_definitions) != 1:
             raise ValueError(
-                "Expected only one class in custom service code or a function entry point {}".format(
-                    model_class_definitions
-                )
+                f"Expected only one class in custom service code or a function entry point {model_class_definitions}"
             )
 
         model_class = model_class_definitions[0]
         model_service = model_class()
 
         if not hasattr(model_service, "handle"):
-            raise ValueError(
-                "Expect handle method in class {}".format(str(model_class))
-            )
+            raise ValueError(f"Expect handle method in class {str(model_class)}")
 
         return model_service.handle, model_service.initialize

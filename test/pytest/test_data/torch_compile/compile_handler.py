@@ -12,8 +12,7 @@ class CompileHandler(BaseHandler):
 
     def preprocess(self, data):
         instances = data[0]["body"]["instances"]
-        input_tensor = torch.as_tensor(instances, dtype=torch.float32)
-        return input_tensor
+        return torch.as_tensor(instances, dtype=torch.float32)
 
     def postprocess(self, data):
         # Convert the output tensor to a list and return

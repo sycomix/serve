@@ -19,7 +19,7 @@ class MetricsStore(object):
         """
         Initialize metrics map,model name and request map
         """
-        self.store = list()
+        self.store = []
         self.request_ids = request_ids
         self.model_name = model_name
         self.cache = {}
@@ -45,7 +45,7 @@ class MetricsStore(object):
         """
         # IF req_id is none error Metric
         if dimensions is None:
-            dimensions = list()
+            dimensions = []
         elif not isinstance(dimensions, list):
             raise ValueError("Please provide a list of dimensions")
         if req_id is None:

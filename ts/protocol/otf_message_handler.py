@@ -34,7 +34,7 @@ def retrieve_msg(conn):
         msg = _retrieve_inference_msg(conn)
         logging.info("Backend received inference at: %d", time.time())
     else:
-        raise ValueError("Invalid command: {}".format(cmd))
+        raise ValueError(f"Invalid command: {cmd}")
 
     return cmd, msg
 
@@ -81,9 +81,11 @@ def create_predict_response(
         else:
             if ts_stream_next is True:
                 context.set_response_header(idx, "ts_stream_next", "true")
-            else:
-                if "true" == context.get_response_headers(idx).get("ts_stream_next"):
-                    context.set_response_header(idx, "ts_stream_next", "false")
+            elif (
+                context.get_response_headers(idx).get("ts_stream_next")
+                == "true"
+            ):
+                context.set_response_header(idx, "ts_stream_next", "false")
 
             content_type = context.get_response_content_type(idx)
             if content_type is None or len(content_type) == 0:
@@ -205,9 +207,8 @@ def _retrieve_load_msg(conn):
     :param conn:
     :return:
     """
-    msg = {}
     length = _retrieve_int(conn)
-    msg["modelName"] = _retrieve_buffer(conn, length)
+    msg = {"modelName": _retrieve_buffer(conn, length)}
     length = _retrieve_int(conn)
     msg["modelPath"] = _retrieve_buffer(conn, length)
     msg["batchSize"] = _retrieve_int(conn)
@@ -254,9 +255,7 @@ def _retrieve_request(conn):
     if length == -1:
         return None
 
-    request = {}
-    request["requestId"] = _retrieve_buffer(conn, length)
-
+    request = {"requestId": _retrieve_buffer(conn, length)}
     headers = []
     while True:
         header = _retrieve_reqest_header(conn)
@@ -289,9 +288,7 @@ def _retrieve_reqest_header(conn):
     if length == -1:
         return None
 
-    header = {}
-    header["name"] = _retrieve_buffer(conn, length)
-
+    header = {"name": _retrieve_buffer(conn, length)}
     length = _retrieve_int(conn)
     header["value"] = _retrieve_buffer(conn, length)
 
@@ -311,9 +308,7 @@ def _retrieve_input_data(conn):
     if length == -1:
         return None
 
-    model_input = {}
-    model_input["name"] = _retrieve_buffer(conn, length).decode("utf-8")
-
+    model_input = {"name": _retrieve_buffer(conn, length).decode("utf-8")}
     length = _retrieve_int(conn)
     content_type = _retrieve_buffer(conn, length).decode("utf-8")
     model_input["contentType"] = content_type

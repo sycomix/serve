@@ -34,22 +34,19 @@ def read_frames(args):
     while cap.isOpened():
         # Capture frame-by-frame
         ret, frame = cap.read()
-        if ret == True:
-
-            # Encode the frame into byte data
-            data = cv2.imencode(".jpg", frame)[1].tobytes()
-            queue.append(data)
-            frame_cnt += 1
-
-            # For videos, add a sleep so that we read at 30 FPS
-            if not isinstance(device, int):
-                time.sleep(1.0 / 30)
-
-        # Break the loop
-        else:
+        if ret != True:
             break
 
-    print("Done reading {} frames".format(frame_cnt))
+        # Encode the frame into byte data
+        data = cv2.imencode(".jpg", frame)[1].tobytes()
+        queue.append(data)
+        frame_cnt += 1
+
+        # For videos, add a sleep so that we read at 30 FPS
+        if not isinstance(device, int):
+            time.sleep(1.0 / 30)
+
+    print(f"Done reading {frame_cnt} frames")
 
     # When everything done, release the video capture object
     cap.release()
@@ -103,9 +100,7 @@ def batch_and_send_frames(args):
             exit_cnt += 1
             # By trial and error, 1000 seemed to work best
             if exit_cnt >= 1000:
-                print(
-                    "Length of queue is {} , snd_cnt is {}".format(len(queue), snd_cnt)
-                )
+                print(f"Length of queue is {len(queue)} , snd_cnt is {snd_cnt}")
                 break
 
         if args.client_batching:
@@ -131,28 +126,26 @@ def batch_and_send_frames(args):
                 start_time = time.time()
                 payload = {}
                 count = 0
-        else:
-            # If queue is not empty, send one frame at a time
-            if queue:
-                payload = queue.popleft()
+        elif queue:
+            payload = queue.popleft()
 
-                response, snd_cnt = send_frames(payload, snd_cnt, session)
-                futures.append(response)
+            response, snd_cnt = send_frames(payload, snd_cnt, session)
+            futures.append(response)
 
-                if snd_cnt % log_cnt == 0:
-                    # Calculate FPS
-                    fps = calculate_fps(start_time, snd_cnt)
+            if snd_cnt % log_cnt == 0:
+                # Calculate FPS
+                fps = calculate_fps(start_time, snd_cnt)
 
-                    # Printing the response
-                    for response in list(as_completed(futures))[-4:]:
-                        print(response.result().content.decode("utf-8"))
+                # Printing the response
+                for response in list(as_completed(futures))[-4:]:
+                    print(response.result().content.decode("utf-8"))
 
-                    # Cleaning up futures in case futures becomes too large
-                    del futures[:log_cnt]
+                # Cleaning up futures in case futures becomes too large
+                del futures[:log_cnt]
 
-                # Reset for next batch
-                start_time = time.time()
-                payload = None
+            # Reset for next batch
+            start_time = time.time()
+            payload = None
 
         # Sleep for 10 ms before trying to send next batch of frames
         time.sleep(args.sleep)

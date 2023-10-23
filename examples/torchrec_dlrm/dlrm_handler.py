@@ -57,7 +57,7 @@ class TorchRecDLRMHandler(BaseHandler, ABC):
         )
 
         self.device = torch.device(
-            self.map_location + ":" + str(properties.get("gpu_id"))
+            f"{self.map_location}:" + str(properties.get("gpu_id"))
             if torch.cuda.is_available() and properties.get("gpu_id") is not None
             else self.map_location
         )
@@ -108,7 +108,7 @@ class TorchRecDLRMHandler(BaseHandler, ABC):
         # Reformat the values input for KeyedJaggedTensor
         id_list_features_values = torch.FloatTensor(id_list_features_values)
         id_list_features_values = torch.transpose(id_list_features_values, 0, 1)
-        id_list_features_values = [value for value in id_list_features_values]
+        id_list_features_values = list(id_list_features_values)
 
         # Dense and Sparse Features for DLRM model
         dense_features = torch.FloatTensor(float_features)
@@ -154,8 +154,7 @@ class TorchRecDLRMHandler(BaseHandler, ABC):
 
         result = []
         for item in data:
-            res = {}
-            res["score"] = item.squeeze().float().tolist()
+            res = {"score": item.squeeze().float().tolist()}
             result.append(res)
 
         return result

@@ -20,8 +20,7 @@ def remove_html_tags(text):
     """
     Removes html tags
     """
-    clean_text = CLEANUP_REGEX.sub("", text)
-    return clean_text
+    return CLEANUP_REGEX.sub("", text)
 
 
 class CustomTextClassifier(BaseHandler, ABC):

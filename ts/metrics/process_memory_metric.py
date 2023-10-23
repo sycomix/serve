@@ -22,8 +22,7 @@ def get_cpu_usage(pid):
         logging.error("Failed get process for pid: %s", pid, exc_info=True)
         return 0
 
-    mem_utilization = process.memory_info()[0]
-    return mem_utilization
+    return process.memory_info()[0]
 
 
 def check_process_mem_usage(stdin):

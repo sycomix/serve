@@ -11,7 +11,10 @@ MODEL_SFILE_NAME = 'resnet18-f37072fd.pth'
 
 def setup_module(module):
     test_utils.torchserve_cleanup()
-    response = requests.get('https://download.pytorch.org/models/' + MODEL_SFILE_NAME, allow_redirects=True)
+    response = requests.get(
+        f'https://download.pytorch.org/models/{MODEL_SFILE_NAME}',
+        allow_redirects=True,
+    )
     with open(os.path.join(test_utils.MODEL_STORE, MODEL_SFILE_NAME), 'wb') as f:
         f.write(response.content)
 
@@ -69,8 +72,6 @@ def test_duplicate_model_registration_using_local_url_followed_by_http_url():
     time.sleep(15)
     if json.loads(response.content)['code'] == 500 and \
             json.loads(response.content)['type'] == "InternalServerException":
-        assert True, "Internal Server Exception, " \
-                     "Model file already exists!! Duplicate model registration request"
         test_utils.unregister_model("resnet18")
         time.sleep(10)
     else:
@@ -87,8 +88,6 @@ def test_duplicate_model_registration_using_http_url_followed_by_local_url():
 
     if json.loads(response.content)['code'] == 409 and \
             json.loads(response.content)['type'] == "ConflictStatusException":
-        assert True, "Conflict Status Exception, " \
-                     "Duplicate model registration request"
         response = test_utils.unregister_model("resnet18")
         time.sleep(10)
     else:

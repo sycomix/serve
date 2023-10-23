@@ -49,7 +49,7 @@ class ModelExportUtils(object):
     def get_archive_export_path(export_file_path, model_name, archive_format):
         return os.path.join(
             export_file_path,
-            "{}{}".format(model_name, archiving_options.get(archive_format)),
+            f"{model_name}{archiving_options.get(archive_format)}",
         )
 
     @staticmethod
@@ -101,13 +101,12 @@ class ModelExportUtils(object):
             return match[0]
         else:
             raise ModelArchiverError(
-                "model-archiver expects only one {} file in the folder."
-                " Found {} files {} in model-path.".format(suffix, count, match)
+                f"model-archiver expects only one {suffix} file in the folder. Found {count} files {match} in model-path."
             )
 
     @staticmethod
     def generate_model(modelargs):
-        model = Model(
+        return Model(
             model_name=modelargs.model_name,
             serialized_file=modelargs.serialized_file,
             model_file=modelargs.model_file,
@@ -116,7 +115,6 @@ class ModelExportUtils(object):
             requirements_file=modelargs.requirements_file,
             config_file=modelargs.config_file,
         )
-        return model
 
     @staticmethod
     def generate_manifest_json(args):
@@ -295,12 +293,7 @@ class ModelExportUtils(object):
         :param unwanted_dirs:
         :return:
         """
-        if directory in unwanted_dirs:
-            return False
-        if directory.startswith("."):
-            return False
-
-        return True
+        return False if directory in unwanted_dirs else not directory.startswith(".")
 
     @staticmethod
     def file_filter(current_file, files_to_exclude):
@@ -339,6 +332,5 @@ class ModelExportUtils(object):
         ModelExportUtils.check_model_name_regex_or_exit(model_name)
         if not os.path.isdir(os.path.abspath(export_path)):
             raise ModelArchiverError(
-                "Given export-path {} is not a directory. "
-                "Point to a valid export-path directory.".format(export_path)
+                f"Given export-path {export_path} is not a directory. Point to a valid export-path directory."
             )

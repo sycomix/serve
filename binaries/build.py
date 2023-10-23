@@ -40,7 +40,7 @@ def build_dist_whl(args):
         os.chdir(cur_dir)
 
         cur_wheel_cmd = (
-            create_wheel_cmd + "--override-name " + binary + "-nightly" + " bdist_wheel"
+            f"{create_wheel_cmd}--override-name {binary}-nightly bdist_wheel"
             if args.nightly
             else create_wheel_cmd
         )

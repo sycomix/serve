@@ -59,7 +59,7 @@ def model_dir(tmp_path_factory, model_name):
     download_model(model_url, model_dir)
 
     files = {
-        "model.py": model_name + ".py",
+        "model.py": f"{model_name}.py",
         "index_to_name.json": "index_to_name.json",
     }
 
@@ -89,7 +89,7 @@ def context(model_dir, model_name):
     context = MockContext(
         model_name="mnist",
         model_dir=model_dir.as_posix(),
-        model_file=model_name + ".py",
+        model_file=f"{model_name}.py",
     )
     context.model_yaml_config = micro_batching_params
     yield context
@@ -119,13 +119,12 @@ def mixed_batch(kitten_image_bytes, dog_image_bytes, request):
         "tiger_cat" if random.random() > 0.5 else "golden_retriever"
         for _ in range(batch_size)
     ]
-    test_data = []
-    for l in labels:
-        test_data.append(
-            {"data": kitten_image_bytes}
-            if l == "tiger_cat"
-            else {"data": dog_image_bytes}
-        )
+    test_data = [
+        {"data": kitten_image_bytes}
+        if l == "tiger_cat"
+        else {"data": dog_image_bytes}
+        for l in labels
+    ]
     return test_data, labels
 
 

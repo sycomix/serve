@@ -47,7 +47,7 @@ class MMFHandler(BaseHandler):
         model_pt_path = os.path.join(model_dir, serialized_file)
         self.map_location = "cuda" if torch.cuda.is_available() else "cpu"
         self.device = torch.device(
-            self.map_location + ":" + str(properties.get("gpu_id"))
+            f"{self.map_location}:" + str(properties.get("gpu_id"))
             if torch.cuda.is_available()
             else self.map_location
         )
@@ -130,15 +130,13 @@ class MMFHandler(BaseHandler):
                 output = self.model(samples)
         else:
             output = self.model(samples)
-            
+
         sigmoid_scores = torch.sigmoid(output["scores"])
         binary_scores = torch.round(sigmoid_scores)
         score = binary_scores[0]
         score = score.nonzero()
 
-        predictions = []
-        for item in score:
-            predictions.append(self.idx_to_class[item.item()])
+        predictions = [self.idx_to_class[item.item()] for item in score]
         print("************** predictions *********", predictions)
         return predictions
 

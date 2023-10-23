@@ -11,12 +11,9 @@ from pkg_resources import packaging
 try:
     import torch_xla
 
-    TORCHXLA_AVAILABLE = (
-        True
-        if packaging.version.parse(torch_xla.__version__)
-        >= packaging.version.parse("2.0")
-        else False
-    )
+    TORCHXLA_AVAILABLE = packaging.version.parse(
+        torch_xla.__version__
+    ) >= packaging.version.parse("2.0")
 except:
     TORCHXLA_AVAILABLE = False
 

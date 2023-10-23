@@ -32,7 +32,7 @@ class DenseNetHandler:
         properties = context.system_properties
         self.map_location = "cuda" if torch.cuda.is_available() and properties.get("gpu_id") is not None else "cpu"
         self.device = torch.device(
-            self.map_location + ":" + str(properties.get("gpu_id"))
+            f"{self.map_location}:" + str(properties.get("gpu_id"))
             if torch.cuda.is_available() and properties.get("gpu_id") is not None
             else self.map_location
         )
@@ -45,10 +45,7 @@ class DenseNetHandler:
         if not os.path.isfile(model_pt_path):
             raise RuntimeError("Missing the model.pt file")
 
-        # model def file
-        model_file = self.manifest["model"].get("modelFile", "")
-
-        if model_file:
+        if model_file := self.manifest["model"].get("modelFile", ""):
             logger.debug("Loading eager model")
             self.model = self._load_pickled_model(model_dir, model_file, model_pt_path)
         else:
@@ -74,9 +71,7 @@ class DenseNetHandler:
         model_class_definitions = list_classes_from_module(module)
         if len(model_class_definitions) != 1:
             raise ValueError(
-                "Expected only one class as model definition. {}".format(
-                    model_class_definitions
-                )
+                f"Expected only one class as model definition. {model_class_definitions}"
             )
 
         model_class = model_class_definitions[0]

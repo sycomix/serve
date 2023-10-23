@@ -72,16 +72,14 @@ def handler(context):
 def envelope_kf(context):
     handler = MNISTClassifier()
     handler.initialize(context)
-    envelope = kserve.KServeEnvelope(handler.handle)
-    return envelope
+    return kserve.KServeEnvelope(handler.handle)
 
 
 @pytest.fixture()
 def envelope_kfv2(context):
     handler = MNISTClassifier()
     handler.initialize(context)
-    envelope = kservev2.KServev2Envelope(handler.handle)
-    return envelope
+    return kservev2.KServev2Envelope(handler.handle)
 
 
 def test_handle(handler, context, image_bytes):

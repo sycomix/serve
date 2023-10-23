@@ -262,8 +262,7 @@ def create_manifest_from_test_json(test_json):
     test_["config_file"] = ""
 
     args = namedtuple("Model", test_.keys())(**test_)
-    manifest = ModelExportUtils.generate_manifest_json(args)
-    return manifest
+    return ModelExportUtils.generate_manifest_json(args)
 
 
 def prepare_model_dir(test_name, integ_tests):

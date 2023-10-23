@@ -70,7 +70,7 @@ def test_inference_apis():
             test_gRPC_utils.get_inference_stub(), item["model_name"], model_input
         )
 
-        print("Prediction is : ", str(prediction))
+        print("Prediction is : ", prediction)
 
         if "expected" in item:
             try:
@@ -113,10 +113,7 @@ def __infer_stream(stub, model_name, model_input):
         inference_pb2.PredictionsRequest(model_name=model_name, input=input_data)
     )
 
-    prediction = []
-    for resp in responses:
-        prediction.append(resp.prediction.decode("utf-8"))
-
+    prediction = [resp.prediction.decode("utf-8") for resp in responses]
     return " ".join(prediction)
 
 
@@ -149,7 +146,7 @@ def test_inference_stream_apis():
             test_gRPC_utils.get_inference_stub(), item["model_name"], model_input
         )
 
-        print("Stream prediction is : ", str(prediction))
+        print("Stream prediction is : ", prediction)
 
         if "expected" in item:
             assert str(prediction) == str(item["expected"])

@@ -13,7 +13,7 @@ def make_charades_df(csv_path, video_dir, classes_file):
     df = pd.read_csv(csv_path)
 
     # transform the id to a pathname
-    df['path'] = df['id'].map(lambda x: '{}{}.mp4'.format(video_dir, x))
+    df['path'] = df['id'].map(lambda x: f'{video_dir}{x}.mp4')
 
     # parse action labels
     df['action_labels'] = df['actions'].map(

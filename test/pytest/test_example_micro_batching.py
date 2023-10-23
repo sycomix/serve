@@ -55,9 +55,10 @@ def mixed_batch(kitten_image_bytes, dog_image_bytes, request):
         "tiger_cat" if random.random() > 0.5 else "golden_retriever"
         for _ in range(batch_size)
     ]
-    test_data = []
-    for l in labels:
-        test_data.append(kitten_image_bytes if l == "tiger_cat" else dog_image_bytes)
+    test_data = [
+        kitten_image_bytes if l == "tiger_cat" else dog_image_bytes
+        for l in labels
+    ]
     return test_data, labels
 
 
@@ -84,7 +85,7 @@ def serialized_file(work_dir):
     scope="module", name="mar_file_path", params=["yaml_config", "no_config"]
 )
 def create_mar_file(work_dir, serialized_file, model_archiver, model_name, request):
-    mar_file_path = Path(work_dir).joinpath(model_name + ".mar")
+    mar_file_path = Path(work_dir).joinpath(f"{model_name}.mar")
 
     name_file = REPO_ROOT_DIR.joinpath(
         "examples/image_classifier/resnet_18/index_to_name.json"
@@ -199,10 +200,7 @@ async def issue_request(model_name, data):
 
 
 async def issue_multi_requests(model_name, data):
-    tasks = []
-    for d in data:
-        tasks.append(asyncio.create_task(issue_request(model_name, d)))
-
+    tasks = [asyncio.create_task(issue_request(model_name, d)) for d in data]
     ret = []
     for t in tasks:
         ret.append(await t)

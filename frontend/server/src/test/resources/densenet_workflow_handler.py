@@ -97,7 +97,7 @@ def map_class_to_label(probs, mapping=None, lbl_classes=None):
     Given a list of classes & probabilities, return a dictionary of
     { friendly class name -> probability }
     """
-    if not (isinstance(probs, list) and isinstance(probs, list)):
+    if not isinstance(probs, list):
         raise Exception("Convert classes to list before doing mapping")
     if mapping is not None and not isinstance(mapping, dict):
         raise Exception("Mapping must be a dict")
@@ -105,12 +105,14 @@ def map_class_to_label(probs, mapping=None, lbl_classes=None):
     if lbl_classes is None:
         lbl_classes = itertools.repeat(range(len(probs[0])), len(probs))
 
-    results = [
+    return [
         {
-            (mapping[str(lbl_class)] if mapping is not None else str(lbl_class)): prob
+            (
+                mapping[str(lbl_class)]
+                if mapping is not None
+                else str(lbl_class)
+            ): prob
             for lbl_class, prob in zip(*row)
         }
         for row in zip(lbl_classes, probs)
     ]
-
-    return results

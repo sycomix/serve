@@ -40,11 +40,7 @@ async def iterate_dataset():
         batch = batch.reshape(1, 1, IMAGE_SIZE[0], IMAGE_SIZE[1])
         # reading the true label
         true_label = torch.frombuffer(label_stream.read(1), dtype=torch.uint8)
-        if len(tasks) <= BATCH_TOTAL_TASKS:
-            tasks.append(
-                send_inference_request(aiohttp_client_session, batch, true_label)
-            )
-        else:
+        if len(tasks) > BATCH_TOTAL_TASKS:
             # Once we've TOTAL_TASKS send all inference request in short time to allow
             # torchserver to do batch inference
             print(f"Total inference calls sent so far {len(tasks)}.")
@@ -54,10 +50,9 @@ async def iterate_dataset():
                     f"Finished sending maximum number of inference calls {TOTAL_INFERENCE_CALLS}. Stopping..."
                 )
             tasks = []
-            tasks.append(
-                send_inference_request(aiohttp_client_session, batch, true_label)
-            )
-
+        tasks.append(
+            send_inference_request(aiohttp_client_session, batch, true_label)
+        )
         total_completed_tasks = total_completed_tasks + 1
 
     await aiohttp_client_session.close()

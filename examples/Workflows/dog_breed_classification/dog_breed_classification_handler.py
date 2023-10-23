@@ -13,7 +13,7 @@ class DogBreedClassifier(ImageClassifier):
                 # Wrap the input data into a format that is expected by the parent
                 # preprocessing method
                 inp_imgs.append({"body": input_data})
-        if len(inp_imgs) > 0:
+        if inp_imgs:
             return ImageClassifier.preprocess(self, inp_imgs)
 
     def inference(self, data, *args, **kwargs):

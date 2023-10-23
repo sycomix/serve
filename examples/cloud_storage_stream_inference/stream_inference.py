@@ -47,15 +47,8 @@ async def read_from_s3():
                         total_completed_tasks = 0
                         for row in f:
                             row_str = row.decode("utf-8")
-                            text = row_str.split(",")[2]
-                            if text:
-                                if len(tasks) <= BATCH_TOTAL_TASKS:
-                                    tasks.append(
-                                        send_inference_request(
-                                            aiohttp_client_session, text
-                                        )
-                                    )
-                                else:
+                            if text := row_str.split(",")[2]:
+                                if len(tasks) > BATCH_TOTAL_TASKS:
                                     # Once we've TOTAL_TASKS send all inference request in short time to allow
                                     # torchserver to do batch inference
                                     print(
@@ -68,11 +61,11 @@ async def read_from_s3():
                                         )
                                         break
                                     tasks = []
-                                    tasks.append(
-                                        send_inference_request(
-                                            aiohttp_client_session, text
-                                        )
+                                tasks.append(
+                                    send_inference_request(
+                                        aiohttp_client_session, text
                                     )
+                                )
                                 total_completed_tasks = total_completed_tasks + 1
                             else:
                                 print("Error - Retrieved text is None - ", text)

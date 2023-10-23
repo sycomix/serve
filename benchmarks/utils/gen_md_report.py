@@ -14,22 +14,22 @@ def iterate_subdir(input_dir, output, hw, ts_version):
     models = defaultdict(list)
     for subdir in sorted(os.listdir(input_dir)):
         index = subdir.rfind('_', 0, subdir.rfind('_') - 1)
-        models[subdir[0:index]].append(subdir)
+        models[subdir[:index]].append(subdir)
 
-    mdFile = MdUtils(file_name=output, title='TorchServe Benchmark on {}'.format(hw))
-    mdFile.new_header(level=1,
-                      title='Date: {}'.format(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")))
-    mdFile.new_header(level=1, title='TorchServe Version: {}'.format(ts_version))
+    mdFile = MdUtils(file_name=output, title=f'TorchServe Benchmark on {hw}')
+    mdFile.new_header(
+        level=1,
+        title=f'Date: {datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")}',
+    )
+    mdFile.new_header(level=1, title=f'TorchServe Version: {ts_version}')
 
-    for model in models.keys():
+    for model in models:
         mdFile.new_header(level=2, title=model)
         files = os.path.join(input_dir, f'{model}_*', 'ab_report.csv')
         files = glob.glob(files)
         files.sort()
         df = pd.concat(map(pd.read_csv, files), ignore_index=True)
-        version_col = []
-        for i in range(len(df.values.tolist())):
-            version_col.append(ts_version)
+        version_col = [ts_version for _ in range(len(df.values.tolist()))]
         df.insert(0, "version", version_col, True)
 
         list_of_strings = list(df.columns)

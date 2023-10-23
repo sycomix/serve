@@ -16,7 +16,7 @@ parser.add_argument(
 parser.add_argument(
     "--filename",
     type=str,
-    default="output-{}.jpg".format(str(datetime.now().strftime("%Y%m%d%H%M%S"))),
+    default=f'output-{str(datetime.now().strftime("%Y%m%d%H%M%S"))}.jpg',
     help="Filename of output image",
 )
 args = parser.parse_args()

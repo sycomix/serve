@@ -41,9 +41,9 @@ def detect_workflow_archiver_version():
         return workflow_archiver.__version__.strip()
 
     # pylint: disable = relative-import
-    return (
-        workflow_archiver.__version__.strip() + "b" + str(date.today()).replace("-", "")
-    )
+    return f"{workflow_archiver.__version__.strip()}b" + str(
+        date.today()
+    ).replace("-", "")
 
 
 def get_nightly_version():

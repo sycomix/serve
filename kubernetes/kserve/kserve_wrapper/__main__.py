@@ -48,17 +48,13 @@ def parse_config():
     )
 
     models = keys["model_snapshot"]["models"]
-    model_names = []
-
     # constructs inf address at a port other than 8080 as kfserver runs at 8080
     if inference_address:
         inf_splits = inference_address.split(":")
         inference_address = inf_splits[0] + inf_splits[1] + ":" + INFERENCE_PORT
     else:
         inference_address = DEFAULT_INFERENCE_ADDRESS
-    # Get all the model_names
-    for model, value in models.items():
-        model_names.append(model)
+    model_names = [model for model, value in models.items()]
     if not model_names:
         model_names = [DEFAULT_MODEL_NAME]
     if not management_address:

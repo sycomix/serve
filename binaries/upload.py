@@ -49,7 +49,7 @@ def upload_conda_packages(args, PACKAGES, CONDA_PACKAGES_PATH):
                 if exit_code != 0:
                     print(f"Anaconda package upload failed for package {name}")
                     return exit_code
-    print(f"All packages uploaded to anaconda successfully")
+    print("All packages uploaded to anaconda successfully")
 
 
 if __name__ == "__main__":

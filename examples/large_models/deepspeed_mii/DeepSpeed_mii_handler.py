@@ -38,8 +38,8 @@ class DeepSpeedMIIHandler(BaseHandler, ABC):
             if torch.cuda.is_available() and properties.get("gpu_id") is not None
             else "cpu"
         )
-        with zipfile.ZipFile(model_dir + "/model.zip", "r") as zip_ref:
-            zip_ref.extractall(model_dir + "/model")
+        with zipfile.ZipFile(f"{model_dir}/model.zip", "r") as zip_ref:
+            zip_ref.extractall(f"{model_dir}/model")
 
         # read configs for the mode, model_name, etc. from setup_config.json
         setup_config_path = os.path.join(model_dir, "setup_config.json")
@@ -53,8 +53,8 @@ class DeepSpeedMIIHandler(BaseHandler, ABC):
         mii_configs = mii.MIIConfig(**self.setup_config["mii_configs"])
         self.pipe = mii.models.load_models(
             task_name=self.setup_config["task_name"],
-            model_name=model_dir + "/model",
-            model_path=model_dir + "/model",
+            model_name=f"{model_dir}/model",
+            model_path=f"{model_dir}/model",
             ds_optimize=self.setup_config["ds_optimize"],
             ds_zero=self.setup_config["ds_zero"],
             provider=provider,
@@ -112,7 +112,4 @@ class DeepSpeedMIIHandler(BaseHandler, ABC):
         Returns:
             (list): Returns a list of the images.
         """
-        images = []
-        for image in inference_output:
-            images.append(np.array(image).tolist())
-        return images
+        return [np.array(image).tolist() for image in inference_output]

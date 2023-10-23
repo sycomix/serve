@@ -15,11 +15,9 @@ TS_LOG = "./logs/ts_log.log"
 MANAGEMENT_API = "http://localhost:8081"
 INFERENCE_API = "http://localhost:8080"
 
-ipex_launcher_available = False
 cmd = ["python", "-m", "intel_extension_for_pytorch.cpu.launch", "--no_python", "ls"]
 r = subprocess.run(cmd)
-if r.returncode == 0:
-    ipex_launcher_available = True
+ipex_launcher_available = r.returncode == 0
 
 
 def setup_module():
@@ -27,7 +25,7 @@ def setup_module():
     response = requests.get(
         "https://torchserve.pytorch.org/mar_files/resnet-18.mar", allow_redirects=True
     )
-    open(test_utils.MODEL_STORE + "resnet-18.mar", "wb").write(response.content)
+    open(f"{test_utils.MODEL_STORE}resnet-18.mar", "wb").write(response.content)
 
 
 def setup_torchserve():
@@ -47,31 +45,26 @@ def get_worker_affinity(num_workers, worker_idx):
     num_cores_per_worker = num_cores // num_workers
     start = worker_idx * num_cores_per_worker
     end = (worker_idx + 1) * num_cores_per_worker - 1
-    curr_worker_cores = [i for i in range(start, end + 1)]
-    affinity = "numactl -C {}-{}".format(str(start), str(end))
-    affinity += " -m {}".format(
-        ",".join(
-            [str(numa_id) for numa_id in cpuinfo.numa_aware_check(curr_worker_cores)]
-        )
+    curr_worker_cores = list(range(start, end + 1))
+    return (
+        f"numactl -C {str(start)}-{str(end)}"
+        + f' -m {",".join([str(numa_id) for numa_id in cpuinfo.numa_aware_check(curr_worker_cores)])}'
     )
-    return affinity
 
 
 def run_inference_with_core_pinning():
     files = {
         "data": (data_file_kitten, open(data_file_kitten, "rb")),
     }
-    response = run_inference_using_url_with_data(
+    return run_inference_using_url_with_data(
         "http://localhost:8080/predictions/resnet-18", files
     )
-    return response
 
 
 def scale_workers_with_core_pinning(scaled_num_workers):
     params = (("min_worker", str(scaled_num_workers)),)
     requests.put("http://localhost:8081/models/resnet-18", params=params)
-    response = requests.get("http://localhost:8081/models/resnet-18")
-    return response
+    return requests.get("http://localhost:8081/models/resnet-18")
 
 
 @pytest.mark.skipif(
@@ -83,9 +76,7 @@ def test_single_worker_affinity():
     worker_idx = 0
     setup_torchserve()
     requests.post(
-        "http://localhost:8081/models?initial_workers={}&synchronous=true&url=resnet-18.mar".format(
-            num_workers
-        )
+        f"http://localhost:8081/models?initial_workers={num_workers}&synchronous=true&url=resnet-18.mar"
     )
 
     response = run_inference_with_core_pinning()
@@ -105,9 +96,7 @@ def test_multi_worker_affinity():
     num_workers = 4
     setup_torchserve()
     requests.post(
-        "http://localhost:8081/models?initial_workers={}&synchronous=true&url=resnet-18.mar".format(
-            num_workers
-        )
+        f"http://localhost:8081/models?initial_workers={num_workers}&synchronous=true&url=resnet-18.mar"
     )
 
     response = run_inference_with_core_pinning()
@@ -130,9 +119,7 @@ def test_worker_scale_up_affinity():
     initial_num_workers = 2
     setup_torchserve()
     requests.post(
-        "http://localhost:8081/models?initial_workers={}&synchronous=true&url=resnet-18.mar".format(
-            initial_num_workers
-        )
+        f"http://localhost:8081/models?initial_workers={initial_num_workers}&synchronous=true&url=resnet-18.mar"
     )
 
     scaled_up_num_workers = 4
@@ -162,9 +149,7 @@ def test_worker_scale_down_affinity():
     initial_num_workers = 4
     setup_torchserve()
     requests.post(
-        "http://localhost:8081/models?initial_workers={}&synchronous=true&url=resnet-18.mar".format(
-            initial_num_workers
-        )
+        f"http://localhost:8081/models?initial_workers={initial_num_workers}&synchronous=true&url=resnet-18.mar"
     )
 
     scaled_down_num_workers = 2

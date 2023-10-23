@@ -417,11 +417,11 @@ class TestAdditionalMetricMethods:
         metrics_cache_obj.set_request_ids(request_id_map)
         metrics_cache_obj.add_percent("PercentMetric", 11, uid1, dimensions)
         assert "[METRICS]PercentMetric.Percent:11|#ModelName:test_add_percent_pass,Level:Model|" in caplog.text
-        assert str(uid1) in caplog.text
+        assert uid1 in caplog.text
         metric = metrics_cache_obj.get_metric("PercentMetric", MetricTypes.GAUGE)
         metric.update(22, request_id=uid2, dimensions=dimensions)
         assert "[METRICS]PercentMetric.Percent:22|#ModelName:test_add_percent_pass,Level:Model|" in caplog.text
-        assert str(uid2) in caplog.text
+        assert uid2 in caplog.text
 
     def test_add_percent_diff_metric_type_pass(self, caplog):
         metrics_cache_obj = MetricsCacheYamlImpl(os.path.join(dir_path, "metrics.yaml"))

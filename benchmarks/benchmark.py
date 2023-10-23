@@ -172,13 +172,12 @@ class Benchmarks:
 
 
 def run_benchmark():
-    if hasattr(Benchmarks, benchmark_name):
-        print("Running benchmark {} with model {}".format(benchmark_name, benchmark_model))
-        res = getattr(Benchmarks, benchmark_name)()
-        pprint.pprint(res)
-        print('\n')
-    else:
-        raise Exception("No benchmark benchmark_named {}".format(benchmark_name))
+    if not hasattr(Benchmarks, benchmark_name):
+        raise Exception(f"No benchmark benchmark_named {benchmark_name}")
+    print(f"Running benchmark {benchmark_name} with model {benchmark_model}")
+    res = getattr(Benchmarks, benchmark_name)()
+    pprint.pprint(res)
+    print('\n')
 
 
 def modify_config_props_for_ts(pargs):
@@ -187,7 +186,7 @@ def modify_config_props_for_ts(pargs):
         f.write('\nnumber_of_netty_threads=32')
         f.write('\njob_queue_size=1000')
         if pargs.gpus:
-            f.write('\nnumber_of_gpu={}'.format(pargs.gpus[0]))
+            f.write(f'\nnumber_of_gpu={pargs.gpus[0]}')
 
 
 benchmark_name_options = [f for f in dir(Benchmarks) if callable(getattr(Benchmarks, f)) and f[0] != '_']
@@ -199,7 +198,16 @@ target.add_argument('-a', '--all', action='store_true', help='Run all benchmarks
 target.add_argument('-s', '--suite', action='store_true', help='Run throughput and latency on a supplied model')
 
 model = parser.add_mutually_exclusive_group()
-model.add_argument('-m', '--model', nargs=1, type=str, dest='model', default=[MODEL_RESNET_18], choices=MODEL_MAP.keys(), help='A preloaded model to run.  It defaults to {}'.format(MODEL_RESNET_18))
+model.add_argument(
+    '-m',
+    '--model',
+    nargs=1,
+    type=str,
+    dest='model',
+    default=[MODEL_RESNET_18],
+    choices=MODEL_MAP.keys(),
+    help=f'A preloaded model to run.  It defaults to {MODEL_RESNET_18}',
+)
 model.add_argument('-c', '--custom-model', nargs=1, type=str, dest='model', help='The path to a custom model to run.  The input argument must also be passed. Currently broken')
 
 parser.add_argument('-d', '--docker', nargs=1, type=str, default=None, help='Docker hub path to use')
@@ -226,13 +234,13 @@ if PLATFORM == 'Windows':
     else:
         print('Please specify jmeter path [--jmeter-path JMETER] while running the script.(Eg. "C:\\Program Files\\apache-jmeter-5.3")')
         exit(0)
-    CMDRUNNER = '"{}\\lib\\cmdrunner-2.2.jar"'.format(CELLAR)
-    JMETER = '{}\\bin\jmeter.bat'.format(CELLAR)
-else :
+    CMDRUNNER = f'"{CELLAR}\\lib\\cmdrunner-2.2.jar"'
+    JMETER = f'{CELLAR}\\bin\jmeter.bat'
+else:
     CELLAR = '/home/linuxbrew/.linuxbrew/Homebrew/Cellar/jmeter/' if 'linux' in sys.platform else '/usr/local/Cellar/jmeter'
     JMETER_VERSION = os.listdir(CELLAR)[0]
-    CMDRUNNER = '{}/{}/libexec/lib/cmdrunner-2.2.jar'.format(CELLAR, JMETER_VERSION)
-    JMETER = '{}/{}/libexec/bin/jmeter'.format(CELLAR, JMETER_VERSION)
+    CMDRUNNER = f'{CELLAR}/{JMETER_VERSION}/libexec/lib/cmdrunner-2.2.jar'
+    JMETER = f'{CELLAR}/{JMETER_VERSION}/libexec/bin/jmeter'
 
 TS_BASE = reduce(lambda val, func: func(val), (os.path.abspath(__file__),) + (os.path.dirname,) * 2)
 JMX_BASE = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'jmx')
@@ -320,17 +328,17 @@ def run_single_benchmark(jmx, jmeter_args=dict(), threads=100, out_dir=None):
         docker_path = 'pytorch/torchserve:latest-gpu' \
             if pargs.gpus else 'pytorch/torchserve:latest'
         if pargs.docker:
-            s_pargs_docker = ''.join([str(elem) for elem in pargs.docker]) 
+            s_pargs_docker = ''.join([str(elem) for elem in pargs.docker])
             if '/' in s_pargs_docker:
                 #Fixed the logic to get the container name correctly
-                container = 'ts_benchmark_{}'.format(pargs.docker[0].split('/')[-1].split(':')[0])
+                container = f"ts_benchmark_{pargs.docker[0].split('/')[-1].split(':')[0]}"
                 docker_path = pargs.docker[0]
             else:
-                container = 'ts_benchmark_{}'.format(pargs.docker[0].split(':')[1])
+                container = f"ts_benchmark_{pargs.docker[0].split(':')[1]}"
                 docker_path = pargs.docker
-        docker_path = ''.join([str(elem) for elem in docker_path]) 
-        run_process("{} rm -f {}".format(docker, container))
-        docker_run_call = "{} run --name {} -p 8080:8080 -p 8081:8081 -itd {}".format(docker, container, docker_path)
+        docker_path = ''.join([str(elem) for elem in docker_path])
+        run_process(f"{docker} rm -f {container}")
+        docker_run_call = f"{docker} run --name {container} -p 8080:8080 -p 8081:8081 -itd {docker_path}"
         retval = run_process(docker_run_call).returncode
         if retval != 0:
             raise Exception("docker run command failed!! Please provide a valid docker image")
@@ -363,13 +371,15 @@ def run_single_benchmark(jmx, jmeter_args=dict(), threads=100, out_dir=None):
         run_jmeter_args.update(jmeter_args)
         run_jmeter_args.update(dict(zip(pargs.options[::2], pargs.options[1::2])))
         abs_jmx = jmx if os.path.isabs(jmx) else os.path.join(JMX_BASE, jmx)
-        jmeter_args_str = ' '.join(sorted(['-J{}={}'.format(key, val) for key, val in run_jmeter_args.items()]))
-        jmeter_call = '{} -n -t {} {} -l {} -j {} -e -o {}'.format(JMETER, abs_jmx, jmeter_args_str, tmpfile, logfile, reportDir)
+        jmeter_args_str = ' '.join(
+            sorted([f'-J{key}={val}' for key, val in run_jmeter_args.items()])
+        )
+        jmeter_call = f'{JMETER} -n -t {abs_jmx} {jmeter_args_str} -l {tmpfile} -j {logfile} -e -o {reportDir}'
         run_process(jmeter_call)
         print('Processing jmeter output')
         time.sleep(30)
         # run AggregateReport
-        ag_call = 'java -jar {} --tool Reporter --generate-csv {} --input-jtl {} --plugin-type AggregateReport'.format(CMDRUNNER, outfile, tmpfile)
+        ag_call = f'java -jar {CMDRUNNER} --tool Reporter --generate-csv {outfile} --input-jtl {tmpfile} --plugin-type AggregateReport'
         if PLATFORM == 'Windows':
             run_process(ag_call, shell=True)
         else:
@@ -383,19 +393,22 @@ def run_single_benchmark(jmx, jmeter_args=dict(), threads=100, out_dir=None):
         }
         graphing_args.update(JMETER_RESULT_SETTINGS)
         gjmx = os.path.join(JMX_BASE, JMX_GRAPHS_GENERATOR_PLAN)
-        graphing_args_str = ' '.join(['-J{}={}'.format(key, val) for key, val in graphing_args.items()])
-        graphing_call = '{} -n -t {} {} -j {}'.format(JMETER, gjmx, graphing_args_str, gLogfile)
+        graphing_args_str = ' '.join(
+            [f'-J{key}={val}' for key, val in graphing_args.items()]
+        )
+        graphing_call = f'{JMETER} -n -t {gjmx} {graphing_args_str} -j {gLogfile}'
         run_process(graphing_call)
 
-        print("Output available at {}".format(out_dir))
-        print("Report generated at {}".format(os.path.join(reportDir, 'index.html')))
+        print(f"Output available at {out_dir}")
+        print(f"Report generated at {os.path.join(reportDir, 'index.html')}")
 
         data_frame = pd.read_csv(outfile, index_col=0)
-        report = list()
+        report = []
         for val in EXPERIMENT_RESULTS_MAP[jmx]:
-            for full_val in [fv for fv in data_frame.index if val in fv]:
-                report.append(decorate_metrics(data_frame, full_val))
-
+            report.extend(
+                decorate_metrics(data_frame, full_val)
+                for full_val in [fv for fv in data_frame.index if val in fv]
+            )
         return report
 
     except Exception:  # pylint: disable=broad-except
@@ -411,7 +424,7 @@ def run_multi_benchmark(key, xs, *args, **kwargs):
     reports = dict()
     out_dirs = []
     for i, x in enumerate(xs):
-        print("Running value {}={} (value {}/{})".format(key, x, i+1, len(xs)))
+        print(f"Running value {key}={x} (value {i + 1}/{len(xs)})")
         kwargs[key] = x
         sub_out_dir = os.path.join(out_dir, str(i+1))
         out_dirs.append(sub_out_dir)
@@ -425,7 +438,7 @@ def run_multi_benchmark(key, xs, *args, **kwargs):
 
     # merge runs together
     inputJtls = [os.path.join(out_dirs[i], 'output.jtl') for i in range(len(xs))]
-    prefixes = ["{} {}: ".format(key, x) for x in xs]
+    prefixes = [f"{key} {x}: " for x in xs]
     baseJtl = inputJtls[0]
     basePrefix = prefixes[0]
     for i in range(1, len(xs), 3): # MergeResults only joins up to 4 at a time
@@ -433,10 +446,10 @@ def run_multi_benchmark(key, xs, *args, **kwargs):
             curInputJtls = [baseJtl] + inputJtls[i:i+3]
             curPrefixes = [basePrefix] + prefixes[i:i+3]
             for j, (jtl, p) in enumerate(zip(curInputJtls, curPrefixes)):
-                f.write("inputJtl{}={}\n".format(j+1, jtl))
-                f.write("prefixLabel{}={}\n".format(j+1, p))
+                f.write(f"inputJtl{j + 1}={jtl}\n")
+                f.write(f"prefixLabel{j + 1}={p}\n")
                 f.write("\n")
-        merge_call = 'java -jar {} --tool Reporter --generate-csv joined.csv --input-jtl {} --plugin-type MergeResults'.format(CMDRUNNER, merge_results)
+        merge_call = f'java -jar {CMDRUNNER} --tool Reporter --generate-csv joined.csv --input-jtl {merge_results} --plugin-type MergeResults'
         time.sleep(30)
         run_process(merge_call)
         shutil.move('joined.csv', joined) # MergeResults ignores path given and puts result into cwd
@@ -445,10 +458,10 @@ def run_multi_benchmark(key, xs, *args, **kwargs):
 
     # build report
     time.sleep(30)
-    run_process('{} -g {} -o {}'.format(JMETER, joined, reportDir))
+    run_process(f'{JMETER} -g {joined} -o {reportDir}')
 
-    print("Merged output available at {}".format(out_dir))
-    print("Merged report generated at {}".format(os.path.join(reportDir, 'index.html')))
+    print(f"Merged output available at {out_dir}")
+    print(f"Merged report generated at {os.path.join(reportDir, 'index.html')}")
 
     return reports
 
@@ -479,7 +492,7 @@ def decorate_metrics(data_frame, row_to_read):
     row_name = row_to_read.replace(' ', '_')
     for key, value in temp_dict.items():
         if key in AGGREGATE_REPORT_CSV_LABELS_MAP:
-            new_key = '{}_{}_{}_{}'.format(benchmark_name, benchmark_model, row_name, AGGREGATE_REPORT_CSV_LABELS_MAP[key])
+            new_key = f'{benchmark_name}_{benchmark_model}_{row_name}_{AGGREGATE_REPORT_CSV_LABELS_MAP[key]}'
             result[new_key] = value
     return result
 

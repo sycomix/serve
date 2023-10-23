@@ -28,9 +28,7 @@ def _to_datatype(dtype: np.dtype) -> str:
     Converts numpy datatype to KServe datatype
     """
     as_str = str(dtype)
-    datatype = _NumpyToDatatype[as_str]
-
-    return datatype
+    return _NumpyToDatatype[as_str]
 
 
 def check_image_with_pil(path):
